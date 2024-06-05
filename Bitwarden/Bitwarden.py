@@ -22,7 +22,14 @@ class BITWARDEN:
         answer="Username:\t"+ information["username"]+'\n'+"Password:\t"+ information["password"]
         return answer
 
-    
+    def get_list_of_names(self):
+        """Выводим список имен всех существующих ключей"""
+        list_of_names=self.bw.search_objects()
+        names = [item['name'] for item in list_of_names]
+        answer="Full list of keys:\n"
+        for name in names:
+            answer=answer+name+'\n'
+        return(answer)
 
 
     def delete(self):
