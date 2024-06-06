@@ -35,7 +35,3 @@ class BITWARDEN:
     def delete(self):
         """Когда пользователь закончил работу вызывает функцию, чтобы выйти из аккаунта Bitwarden"""
         self.bw.logout()
-    
-    
-
-
