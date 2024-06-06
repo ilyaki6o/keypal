@@ -42,6 +42,9 @@ def callback(call):
                 res += el + '\n'
 
             bot.send_message(call.message.chat.id, res)
+        case "log_out":
+            bw.delete()
+            init(call.message)
 
 
 @bot.message_handler(commands=['start'])
