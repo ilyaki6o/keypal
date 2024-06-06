@@ -34,6 +34,14 @@ def callback(call):
         case "get":
             bot.send_message(call.message.chat.id, "Enter key of password")
             bot.register_next_step_handler(call.message, get_password)
+        case "get_all":
+            data = bw.get_list_of_names()
+            res = "List of password keys:\n"
+
+            for el in data:
+                res += el + '\n'
+
+            bot.send_message(call.message.chat.id, res)
 
 
 @bot.message_handler(commands=['start'])
@@ -51,8 +59,6 @@ def init(message):
 
 def get_password(message):
     key = message.text.strip()
-
-    print(key)
 
     data = bw.get_information(key)
 
