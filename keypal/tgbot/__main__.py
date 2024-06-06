@@ -31,6 +31,9 @@ def callback(call):
             markup_new.add(types.InlineKeyboardButton("Log in", callback_data="registered"))
             bot.send_message(call.message.chat.id, "Click the button below when you register your account to log in.",
                              reply_markup=markup_new)
+        case "get":
+            bot.send_message(call.message.chat.id, "Enter key of password")
+            bot.register_next_step_handler(call.message, get_password)
 
 
 @bot.message_handler(commands=['start'])
@@ -45,6 +48,15 @@ def init(message):
     bot.send_message(message.chat.id, "Hello, its KeyPal - telegram bot wrapper for Bitwarden password manager.")
     bot.send_message(message.chat.id, "Do you already have a Bitwarden account?", reply_markup=markup)
 
+
+def get_password(message):
+    key = message.text.strip()
+
+    print(key)
+
+    data = bw.get_information(key)
+
+    bot.reply_to(message, "Username: {}\n".format(data[0]) + "Password: {}".format(data[1]))
 
 def user_name(message):
     global name
