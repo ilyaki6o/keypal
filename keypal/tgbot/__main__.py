@@ -1,10 +1,12 @@
 import telebot
 from telebot import types
+from ..bitwarden import Bitwarden as bitwd
 
 TOKEN = "7342917304:AAG0OneBgGCglwp07pD3TXw5tNPwMCf1E2o"
 
 name = ""
 password = ""
+bw = None
 
 bot = telebot.TeleBot(TOKEN)
 
