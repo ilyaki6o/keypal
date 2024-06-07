@@ -27,7 +27,7 @@ def callback(call):
     match data:
         case "registered":
             # log in
-            bot.register_next_step_handler(call.message, email_request)
+            email_request(call.message)
         case "unregistered":
             # registration
             markup = types.InlineKeyboardMarkup()
@@ -118,7 +118,7 @@ def authorization_check(message):
         bw = bitwd.BITWARDEN(name, password)
     except pex_exc.EOF:
         bot.send_message(message.chat.id, "Login or password is wrong. Please try log in again.")
-        bot.register_next_step_handler(message, email_request)
+        email_request(message)
     else:
         global_menu(message)
 
