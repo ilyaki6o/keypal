@@ -17,8 +17,7 @@ def callback(call):
 
     match data:
         case "registered":
-            bot.send_message(call.message.chat.id, "Please enter your email")
-            bot.register_next_step_handler(call.message, user_name)
+            bot.register_next_step_handler(call.message, email_request)
         case "unregistered":
             markup = types.InlineKeyboardMarkup()
             markup.add(types.InlineKeyboardButton("Create account",
@@ -59,22 +58,20 @@ def init(message):
     bot.send_message(message.chat.id, "Hello, its KeyPal - telegram bot wrapper for Bitwarden password manager.")
     bot.send_message(message.chat.id, "Do you already have a Bitwarden account?", reply_markup=markup)
 
+# authorization
+def email_request(message):
+    bot.send_message(message.chat.id, "Please enter your email")
+    bot.register_next_step_handler(message, password_request)
 
-def get_password(message):
-    key = message.text.strip()
 
-    data = bw.get_information(key)
-
-    bot.reply_to(message, "Username: {}\n".format(data[0]) + "Password: {}".format(data[1]))
-
-def user_name(message):
+def password_request(message):
     global name
     name = message.text.strip()
     bot.send_message(message.chat.id, "Please enter your password")
-    bot.register_next_step_handler(message, user_pass)
+    bot.register_next_step_handler(message, authorization_check)
 
 
-def user_pass(message):
+def authorization_check(message):
     global password
     global bw
     
@@ -84,14 +81,21 @@ def user_pass(message):
         bw = bitwd.BITWARDEN(name, password)
     except pex_exc.EOF:
         bot.send_message(message.chat.id, "Login or password is wrong. Please try log in again.")
-        bot.send_message(message.chat.id, "Please enter your email")
-        bot.register_next_step_handler(message, user_name)
+        bot.register_next_step_handler(message, email_request)
     else:
         global_menu(message)
 
 
+# bitwaren cli requests
+def get_password(message):
+    key = message.text.strip()
+
+    data = bw.get_information(key)
+
+    bot.reply_to(message, "Username: {}\n".format(data[0]) + "Password: {}".format(data[1]))
+
+
 def global_menu(message):
-    
     markup = types.InlineKeyboardMarkup()
 
     button_get = types.InlineKeyboardButton("Get password", callback_data="get")
