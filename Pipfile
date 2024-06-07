@@ -8,6 +8,8 @@ pytelegrambotapi = "*"
 s6r-bitwarden-cli = "*"
 
 [dev-packages]
+pydocstyle = "*"
+flake8 = "*"
 
 [requires]
 python_version = "3.12"
