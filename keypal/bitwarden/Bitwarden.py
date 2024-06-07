@@ -18,24 +18,15 @@ class BITWARDEN:
         """Получаем информацию по его имени, собственно говоря передаем название ключа"""
         infa=self.bw.get_item(call)
         information=infa["login"]
-        answer=""
-        answer="Username:\t"+ information["username"]+'\n'+"Password:\t"+ information["password"]
+        answer=(information["username"], information["password"])
         return answer
 
     def get_list_of_names(self):
         """Выводим список имен всех существующих ключей"""
         list_of_names=self.bw.search_objects()
         names = [item['name'] for item in list_of_names]
-        answer="Full list of keys:\n"
-        for name in names:
-            answer=answer+name+'\n'
-        return(answer)
-
+        return names
 
     def delete(self):
         """Когда пользователь закончил работу вызывает функцию, чтобы выйти из аккаунта Bitwarden"""
         self.bw.logout()
-    
-    
-
-
