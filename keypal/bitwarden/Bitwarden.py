@@ -16,9 +16,11 @@ class BITWARDEN:
         
     def get_information(self,call):
         """Получаем информацию по его имени, собственно говоря передаем название ключа"""
-        infa=self.bw.get_item(call)
-        information=infa["login"]
-        answer=(information["username"], information["password"])
+        answer=()
+        if call in self.get_list_of_names():
+            infa=self.bw.get_item(call)
+            information=infa["login"]
+            answer=(information["username"],information["password"])
         return answer
 
     def get_list_of_names(self):
