@@ -14,7 +14,7 @@ import re
 
 
 class BITWARDEN:
-    
+
     def __init__(self,name,passw):
         """
         Initialization with Bitwarden account login and password, access to the Bitwarden vault 
@@ -46,16 +46,17 @@ class BITWARDEN:
             answer=(information["username"],information["password"])
         return answer
 
-     def get_list_of_names(self):
+    def get_list_of_names(self):
         """Display a list of all key names"""
         list_of_names=subprocess.Popen(f"bw list items --session {self.bw_session}",
-                                  shell=True, stdout=subprocess.PIPE)
+                                    shell=True, stdout=subprocess.PIPE)
         data=list_of_names.communicate()[0].decode()
         items = json.loads(data)
         names = [item['name'] for item in items]
         return names
 
-     def add_password(self,name,username,pas):
+
+    def add_password(self,name,username,pas):
         """
         Add new password to the Bitwarden account
 
@@ -72,7 +73,6 @@ class BITWARDEN:
         Logging out from Bitwarden account"""
         hoho=subprocess.Popen("bw logout",shell=True,stdout=subprocess.PIPE)
         data=hoho.communicate()[0].decode()
-
 
 
 
