@@ -28,6 +28,23 @@ class BITWARDEN:
         self.login=name
         self.password=passw
 
+    def get_information(self,call):
+        """
+        Getting information about a key by its name 
+            
+        args: name of the key
+            
+        example: my_account.get_information("name of your key that you have in your key list")"""
+        answer=()
+        if call in self.get_list_of_names():
+            infa=subprocess.Popen(f"bw get item {call} --session {self.bw_session}",
+                                    shell=True, stdout=subprocess.PIPE)
+            data=infa.communicate()[0].decode()
+            items = json.loads(data)
+            information=items["login"]
+            answer=(information["username"],information["password"])
+        return answer
+
 
     
 
