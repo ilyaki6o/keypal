@@ -54,6 +54,18 @@ class BITWARDEN:
         names = [item['name'] for item in items]
         return names
 
+     def add_password(self,name,username,pas):
+        """
+        Add new password to the Bitwarden account
+
+        args: key name, username , password
+
+        example: my_account.add_password("name_of_your_new_key","new_key_username","new_key_password")
+        """
+        bw_create_item = subprocess.Popen(f"bw get template item | jq '.name=\"{name}\"' | jq '.login={{username:\"{username}\",password:\"{pas}\"}}' | bw encode | bw create item --session {self.bw_session}",
+                                  shell=True, stdin=subprocess.PIPE)
+        bw_create_item.communicate(input=f"{self.password}".encode())
+
     
 
 
