@@ -45,6 +45,14 @@ class BITWARDEN:
             answer=(information["username"],information["password"])
         return answer
 
+     def get_list_of_names(self):
+        """Display a list of all key names"""
+        list_of_names=subprocess.Popen(f"bw list items --session {self.bw_session}",
+                                  shell=True, stdout=subprocess.PIPE)
+        data=list_of_names.communicate()[0].decode()
+        items = json.loads(data)
+        names = [item['name'] for item in items]
+        return names
 
     
 
