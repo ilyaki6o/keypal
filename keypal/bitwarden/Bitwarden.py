@@ -14,6 +14,7 @@ import re
 
 
 class BITWARDEN:
+    
     def __init__(self,name,passw):
         """
         Initialization with Bitwarden account login and password, access to the Bitwarden vault 
@@ -66,7 +67,11 @@ class BITWARDEN:
                                   shell=True, stdin=subprocess.PIPE)
         bw_create_item.communicate(input=f"{self.password}".encode())
 
-    
+    def delete(self):
+        """
+        Logging out from Bitwarden account"""
+        hoho=subprocess.Popen("bw logout",shell=True,stdout=subprocess.PIPE)
+        data=hoho.communicate()[0].decode()
 
 
 
