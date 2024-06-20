@@ -35,7 +35,8 @@ class BITWARDEN:
             
         args: name of the key
             
-        example: my_account.get_information("name of your key that you have in your key list")"""
+        example: my_account.get_information("name of your key that you have in your key list")
+        """
         answer=()
         if call in self.get_list_of_names():
             infa=subprocess.Popen(f"bw get item {call} --session {self.bw_session}",
@@ -68,11 +69,10 @@ class BITWARDEN:
                                   shell=True, stdin=subprocess.PIPE)
         bw_create_item.communicate(input=f"{self.password}".encode())
 
+
     def delete(self):
         """
         Logging out from Bitwarden account"""
         hoho=subprocess.Popen("bw logout",shell=True,stdout=subprocess.PIPE)
         data=hoho.communicate()[0].decode()
-
-
 
