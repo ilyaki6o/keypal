@@ -19,7 +19,12 @@ class Database:
             return self.cursor.fetchone()
         return ()
     
-   
+    def add_new(self, client_id, client_secret):
+        query3=f""" INSERT INTO APIKEYS (id,client_id,client_secret) VALUES('{self.id}','{client_id}','{client_secret}')"""
+        self.cursor.execute(query3)
+        self.db.commit()
+
+    
 
 
 
