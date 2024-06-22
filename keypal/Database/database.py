@@ -24,7 +24,8 @@ class Database:
         self.cursor.execute(query3)
         self.db.commit()
 
-    
+    def close(self):
+        self.db.close()
 
 
 
