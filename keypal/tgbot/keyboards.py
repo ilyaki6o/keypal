@@ -14,6 +14,6 @@ log_in = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Log in", callback_data="log_in")]
 ])
 
-# new_session = InlineKeyboardMarkup(inline_keyboard=[
-#     [InlineKeyboardButton(text="Start Session", callback_data="start_session")],
-# ])
+new_session = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="Start Session", callback_data="start_session")],
+])
