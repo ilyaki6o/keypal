@@ -1,5 +1,6 @@
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
                            InlineKeyboardMarkup, InlineKeyboardButton)
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 start = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Yes", callback_data="log_in"), 
@@ -23,3 +24,27 @@ main_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="SET", callback_data="set_password"),
      InlineKeyboardButton(text="UPDATE", callback_data="update_password")],
 ])
+
+async def select_url(buttons: list[str], column: int):
+    keyboard = InlineKeyboardBuilder()
+    
+    set_bt = buttons[column * 5: (column + 1) * 5]
+
+    for el in set_bt:
+        keyboard.add(InlineKeyboardButton(text=f"{el}", callback_data=f"url_{el}"))
+
+    keyboard.adjust(1)
+
+    if len(buttons) > 5:
+        if column == 0:
+            keyboard.add(InlineKeyboardButton(text="Next", callback_data="next_url"))
+            keyboard.adjust(1)
+        elif (len(buttons) - 1) / 5 == column:
+            keyboard.add(InlineKeyboardButton(text="Prev", callback_data="prev_url"))
+            keyboard.adjust(1)
+        else:
+            keyboard.add(InlineKeyboardButton(text="Next", callback_data="next_url"))
+            keyboard.add(InlineKeyboardButton(text="Prev", callback_data="prev_url"))
+            keyboard.adjust(1, 1, 1, 1, 1, 2)
+
+    return keyboard.as_markup()

@@ -9,17 +9,34 @@ from aiogram.fsm.context import FSMContext
 
 import keyboards as kb
 
+urls = ["www.google.com",
+        "calendar.google.com",
+        "music.google.com",
+        "tasks.google.com",
+        "youtube.google.com",
+        "news.google.com",
+        "market.google.com",
+        ]
+
 
 router = Router()
 bw = ''
+button_column = 0
 
 
 class User(StatesGroup):
     client_id = State()
     client_secret = State()
 
+
 class MasterP(StatesGroup):
     master_password = State()
+
+
+class Get_Password(StatesGroup):
+    url = State()
+    login = State()
+    password = State()
 
 
 @router.message(CommandStart())
@@ -49,6 +66,13 @@ async def master_password(call: CallbackQuery, state: FSMContext):
     await state.set_state(MasterP.master_password) 
     await call.answer('')
     await call.message.answer("Please enter your master password")
+
+
+@router.callback_query(F.data == "get_password")
+async def get_password(call: CallbackQuery, state: FSMContext):
+    await call.answer('')
+    await call.message.answer("Enter the url to search for the password")
+    await state.set_state(Get_Password.url)
 
 
 async def start_session(message: Message):
@@ -97,3 +121,26 @@ async def check_master_password(message: Message, state: FSMContext):
 
     await state.clear()
     await main_menu(message)
+
+
+@router.message(Get_Password.url)
+async def choose_url(message: Message, state: FSMContext):
+    await state.update_data(url=message.text)
+    
+    url = message.text
+    cur_urls = urls
+    chosen_urls = []
+
+    for el in cur_urls:
+        if str(url) in el:
+            chosen_urls.append(el)
+
+    if len(chosen_urls) == 0:
+        await message.answer("There are no records for this website")
+        await state.clear()
+        await main_menu(message)
+    elif len(chosen_urls) == 1:
+        await message.answer("Selected website {}".format(chosen_urls[0]))
+        await state.set_state(Get_Password.login)
+    else:
+        await message.answer("Please select website", reply_markup=await kb.select_url(chosen_urls, button_column))
