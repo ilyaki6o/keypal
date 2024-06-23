@@ -24,6 +24,14 @@ class Database:
         self.cursor.execute(query3)
         self.db.commit()
 
+    def delete_key(self):
+        """
+        Delete the API key with the current id from the database.
+        """
+        query4=f"""DELETE FROM APIKEYS WHERE id ='{self.id}' """
+        self.cursor.execute(query4)
+        self.db.commit()
+
     def close(self):
         self.db.close()
 
