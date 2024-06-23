@@ -18,8 +18,8 @@ class User(StatesGroup):
     client_id = State()
     client_secret = State()
 
-# class MasterP(StatesGroup):
-#     master_password = State()
+class MasterP(StatesGroup):
+    master_password = State()
 
 
 @router.message(CommandStart())
@@ -44,15 +44,15 @@ async def registration(call: CallbackQuery):
                               reply_markup=kb.log_in)
 
 
-# @router.callback_query(F.data == "start_session")
-# async def master_password(call: CallbackQuery, state: FSMContext):
-#     await state.set_state(MasterP.master_password) 
-#     await call.answer('')
-#     await call.message.answer("Please enter your master password")
+@router.callback_query(F.data == "start_session")
+async def master_password(call: CallbackQuery, state: FSMContext):
+    await state.set_state(MasterP.master_password) 
+    await call.answer('')
+    await call.message.answer("Please enter your master password")
 
 
-# async def start_session(message: Message):
-#     await message.answer("Click the button below to start new session", reply_markup=kb.new_session)
+async def start_session(message: Message):
+    await message.answer("Click the button below to start new session", reply_markup=kb.new_session)
 
 
 async def request_client_id(message: Message, state: FSMContext):
@@ -81,14 +81,14 @@ async def auth_check(message: Message, state: FSMContext):
     # else:
     
     await state.clear()
-    # await start_session(message)
+    await start_session(message)
 
 
-# @router.message(MasterP.master_password)
-# async def check_master_password(message: Message, state: FSMContext):
-#     await state.update_data(master_password=message.text)
-#     data = await state.get_data()
-#
-#     await message.answer(f"Your master_password: {data['master_password']}")
-#
-#     await state.clear()
+@router.message(MasterP.master_password)
+async def check_master_password(message: Message, state: FSMContext):
+    await state.update_data(master_password=message.text)
+    data = await state.get_data()
+
+    await message.answer(f"Your master_password: {data['master_password']}")
+
+    await state.clear()
