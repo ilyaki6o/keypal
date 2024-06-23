@@ -39,12 +39,11 @@ async def select_url(buttons: list[str], column: int):
         if column == 0:
             keyboard.add(InlineKeyboardButton(text="Next", callback_data="next_url"))
             keyboard.adjust(1)
-        elif (len(buttons) - 1) / 5 == column:
+        elif (len(buttons) - 1) // 5 == column:
             keyboard.add(InlineKeyboardButton(text="Prev", callback_data="prev_url"))
             keyboard.adjust(1)
         else:
-            keyboard.add(InlineKeyboardButton(text="Next", callback_data="next_url"))
-            keyboard.add(InlineKeyboardButton(text="Prev", callback_data="prev_url"))
-            keyboard.adjust(1, 1, 1, 1, 1, 2)
+            keyboard.row(InlineKeyboardButton(text="Prev", callback_data="prev_url"),
+                         InlineKeyboardButton(text="Next", callback_data="next_url"), width=2)
 
     return keyboard.as_markup()
