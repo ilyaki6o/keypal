@@ -32,6 +32,18 @@ class Database:
         self.cursor.execute(query4)
         self.db.commit()
 
+    def change_password(self,client_id, client_secret):
+        """
+        Update the client ID and client secret for the current API key.
+
+        Args:
+            client_id (str): The new client_id.
+            client_secret (str): The new client_secret.
+        """
+        query5=f"""UPDATE APIKEYS SET [client_id]='{client_id}', [client_secret]='{client_secret}' WHERE id='{self.id}'"""
+        self.cursor.execute(query5)
+        self.db.commit()
+
     def close(self):
         self.db.close()
 
