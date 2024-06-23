@@ -17,3 +17,9 @@ log_in = InlineKeyboardMarkup(inline_keyboard=[
 new_session = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Start Session", callback_data="start_session")],
 ])
+
+main_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="GET", callback_data="get_password")],
+    [InlineKeyboardButton(text="SET", callback_data="set_password"),
+     InlineKeyboardButton(text="UPDATE", callback_data="update_password")],
+])

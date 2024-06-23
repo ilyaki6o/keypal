@@ -24,7 +24,7 @@ class MasterP(StatesGroup):
 
 @router.message(CommandStart())
 async def start(message: Message):
-    await message.answer("Hello, its KeyPal - telegram bot wrapper for Bitwarden client_secret manager.")
+    await message.answer("Hello, its KeyPal - telegram bot wrapper for Bitwarden password manager.")
     await message.answer("Do you already have a Bitwarden account?", reply_markup=kb.start)
 
 
@@ -60,6 +60,10 @@ async def request_client_id(message: Message, state: FSMContext):
     await message.answer("Please enter your client_id")
 
 
+async def main_menu(message: Message):
+    await message.answer("Welcome to KeyPal", reply_markup=kb.main_menu)
+
+
 @router.message(User.client_id)
 async def request_client_secret(message: Message, state: FSMContext):
     await state.update_data(client_id=message.text)
@@ -92,3 +96,4 @@ async def check_master_password(message: Message, state: FSMContext):
     await message.answer(f"Your master_password: {data['master_password']}")
 
     await state.clear()
+    await main_menu(message)
