@@ -9,13 +9,10 @@ class Database:
 
     def __init__(self,id):
         """
-        Initialize the Database object.
+        Create the APIKEYS table in the database if it does not already exist.
 
-        Args:
-            id (str): The unique identifier for the API key.
-
-        This method establishes a connection to the SQLite database
-        and creates the APIKEYS table if it doesn't exist.
+        :param id: The unique identifier for the API key.
+        :type id: str
         """
         self.id=id
         self.db=sqlite3.connect('./database.db')
@@ -26,11 +23,10 @@ class Database:
 
     def check(self):
         """
-        Check if an API key with the given id exists in the database.
+        Verify if an API key with the specified id is present in the database.
 
-        Returns:
-            tuple: A tuple containing (client_id, client_secret) if the key exists, 
-                   an empty tuple otherwise.
+        :return: A tuple with (client_id, client_secret) if found, otherwise an empty tuple.
+        :rtype: tuple
         """
         query1=f"""SELECT COUNT(*) FROM APIKEYS WHERE id='{self.id}'"""
         self.cursor.execute(query1)
@@ -44,14 +40,14 @@ class Database:
     
     def add_new(self, client_id, client_secret):
         """
-        Add a new API key to the database.
+        Insert a new API key  into the database.
 
-        Args:
-            client_id (str): The client_id for the API key.
-            client_secret (str): The client_secret for the API key.
-
-        Returns:
-            bool: True if the key was successfully added, False if the key with this id already exists.
+        :param client_id: The client id of the API key.
+        :type client_id: str
+        :param client_secret: The client secret of the API key.
+        :type client_secret: str
+        :return: True if the key was added successfully, False if a key with this id already exists.
+        :rtype: bool
         """
         if self.check()==():
             query3=f""" INSERT INTO APIKEYS (id,client_id,client_secret) VALUES('{self.id}','{client_id}','{client_secret}')"""
@@ -62,9 +58,7 @@ class Database:
 
 
     def delete_key(self):
-        """
-        Delete the API key with the current id from the database.
-        """
+        """Delete the API key with the current id from the database."""
         query4=f"""DELETE FROM APIKEYS WHERE id ='{self.id}' """
         self.cursor.execute(query4)
         self.db.commit()
@@ -72,11 +66,12 @@ class Database:
 
     def change_password(self,client_id, client_secret):
         """
-        Update the client ID and client secret for the current API key.
+        Update the client ID and client secret for the current API key in the database.
 
-        Args:
-            client_id (str): The new client_id.
-            client_secret (str): The new client_secret.
+        :param client_id: The new value of client identifier.
+        :type client_id: str
+        :param client_secret: The new value of client secret.
+        :type client_secret: str
         """
         query5=f"""UPDATE APIKEYS SET [client_id]='{client_id}', [client_secret]='{client_secret}' WHERE id='{self.id}'"""
         self.cursor.execute(query5)
@@ -85,11 +80,8 @@ class Database:
     
 
     def close(self):
-        """
-        Close the database connection.
-        """
+        """Close the database connection."""
         self.db.close()
-
 
 
 
