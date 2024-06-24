@@ -30,8 +30,11 @@ class BitwardenClient:
             raise exception(message)
 
     def add_session_key(self, cmd):
-        """Append session key to command."""
-        return f"{cmd} --session {self.session_key}"
+        """
+        Append session key to command.
+        """
+        return f'BW_SESSION="{self.session_key}"; {cmd}'
+
 
     def login(self, client_id: str = '', client_secret: str = '') -> None:
         """
