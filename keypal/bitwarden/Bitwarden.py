@@ -73,7 +73,6 @@ class BitwardenClient:
         :return: Session key obtained after unlocking the vault.
         :rtype: str
         """
-        self.password = password
         child = pexpect.spawn("bw unlock --raw")
         child.expect("Master password")
         child.sendline(password)
@@ -102,10 +101,8 @@ class BitwardenClient:
             cmd = self.add_session_key("bw list items")
             child = pexpect.spawn(cmd)
             raw_data = child.read().decode()
-            payload_start = raw_data.find('[{')
-            data = json.loads(raw_data[payload_start:])
-        return data 
-
+            data = json.loads(raw_data.splitlines()[-1])
+        return data
 
     def search_items_with_uri(self, uri: str):
         """
@@ -116,22 +113,29 @@ class BitwardenClient:
         :return: List of URIs that match the search criteria.
         :rtype: list
         """
-        with pexpect.spawn("bw list items") as child:
-            child.expect("Master password:")
-            child.sendline(self.password)
-            response = child.read().decode()
-        json_start = response.find('[{')
-        json_string = response[json_start:]
-        items = json.loads(json_string)
-        all_uris=[]
-        for item in items:
-            for uri_obj in item['login']['uris']:
-                all_uris.append(uri_obj['uri'])
-        return [url for url in all_uris if url.startswith(uri)]
-
+        # with pexpect.spawn("bw list items") as child:
+            # child.expect("Master password:")
+            # child.sendline(self.password)
+            # response = child.read().decode()
+        # json_start = response.find('')
+        # json_string = response[json_start:]
+        # items = json.loads(json_string)
+        # all_uris=[]
+        # for item in items:
+            # for uri_obj in item['login']['uris']:
+                # all_uris.append(uri_obj['uri'])
+        # return [url for url in all_uris if url.startswith(uri)]
 
     def get_status(self) -> str:
-        pass
+        cmd = "bw status"
+        if self.unlocked:
+            self.add_session_key(cmd)
+        child = pexpect.spawn(cmd)
+        values = json.loads(child.read().decode())
+        return values.get('status', '')
+
+    def is_locked(self):
+        return self.get_status() == 'locked'
 
     def sync(self) -> None:
         """Synchronize Bitwarden vault."""
