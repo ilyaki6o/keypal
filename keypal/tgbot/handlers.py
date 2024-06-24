@@ -41,10 +41,11 @@ class MasterP(StatesGroup):
     master_password = State()
 
 
-class Get_Password(StatesGroup):
+class Password_flow(StatesGroup):
     url = State()
     login = State()
     password = State()
+    work_type = State()
 
 
 ################# Commands
@@ -84,7 +85,16 @@ async def master_password(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "get_password")
 async def get_password(call: CallbackQuery, state: FSMContext):
     await call.message.answer("Enter the url to search for the password")
-    await state.set_state(Get_Password.url)
+    await state.set_state(Password_flow.url)
+    await state.update_data(work_type=str(call.data))
+    await call.answer('')
+
+
+@router.callback_query(F.data == "update_password")
+async def update_password(call: CallbackQuery, state: FSMContext):
+    await call.message.answer("Enter the url to search for the password")
+    await state.set_state(Password_flow.url)
+    await state.update_data(work_type=str(call.data))
     await call.answer('')
 
 
@@ -93,7 +103,7 @@ async def accept_url(call: CallbackQuery, state: FSMContext):
     correct_url = str(call.data)[4:]
 
     await state.update_data(url=correct_url)
-    await state.set_state(Get_Password.login)
+    await state.set_state(Password_flow.login)
     await choose_login(call.message, state)
     await call.answer("")
 
@@ -103,8 +113,7 @@ async def accept_login(call: CallbackQuery, state: FSMContext):
     correct_login = str(call.data)[6:]
 
     await state.update_data(login=correct_login)
-    await state.set_state(Get_Password.password)
-    await accept_password(call.message, state)
+    await check_work_type(call.message, state)
     await call.answer("")
 
 
@@ -196,7 +205,7 @@ async def check_master_password(message: Message, state: FSMContext):
     await main_menu(message)
 
 
-@router.message(Get_Password.url)
+@router.message(Password_flow.url)
 async def choose_url(message: Message, state: FSMContext):
     global url_column, chosen_urls
     
@@ -218,7 +227,7 @@ async def choose_url(message: Message, state: FSMContext):
     elif len(chosen_urls) == 1:
         await message.answer("Selected website {}".format(chosen_urls[0]))
         await state.update_data(url=chosen_urls[0])
-        await state.set_state(Get_Password.login)
+        await state.set_state(Password_flow.login)
         await choose_login(message, state)
     else:
         await message.answer("Please select website", reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
@@ -236,9 +245,19 @@ async def choose_login(message: Message, state: FSMContext):
     await message.answer("Please select login", reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
 
-async def accept_password(message: Message, state: FSMContext):
-    password = "nabsjdasdkh11ase2"
+async def check_work_type(message: Message, state: FSMContext):
+    password = "asdasdas123123asdasd"
     await state.update_data(password=password)
+    data = await state.get_data()
+
+    if data["work_type"] == "get_password":
+        await send_password(message, state)
+    elif data["work_type"] == "update_password":
+        await message.answer("Please enter new password")
+        await state.set_state(Password_flow.password)
+
+
+async def send_password(message: Message, state: FSMContext):
     data = await state.get_data()
 
     res = "For website: {}\n\nLogin: <code>{}</code>\nPassword: <code>{}</code>".format(data["url"], data["login"], data["password"])
@@ -246,3 +265,9 @@ async def accept_password(message: Message, state: FSMContext):
     await message.answer(res, parse_mode=ParseMode.HTML)
     await state.clear()
     await main_menu(message)
+
+
+@router.message(Password_flow.password)
+async def change_password(message: Message, state: FSMContext):
+    await state.update_data(password=message.text)
+    await send_password(message, state)
