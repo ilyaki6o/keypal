@@ -31,7 +31,7 @@ class BitwardenClient:
 
     def add_session_key(self, cmd):
         """Append session key to command."""
-        return f"{cmd} --session {self.session_key}"
+        return f'/bin/bash -c "BW_SESSION={self.session_key}; {cmd}"'
 
     def login(self, client_id: str = '', client_secret: str = '') -> None:
         """
@@ -130,10 +130,8 @@ class BitwardenClient:
         cmd = "bw status"
         if self.unlocked:
             cmd = self.add_session_key(cmd)
-        print(cmd)
         child = pexpect.spawn(cmd)
         data = child.read().decode().splitlines()[-1]
-        print('BBB', data)
         values = json.loads(data)
         return values.get('status', '')
 
@@ -196,12 +194,10 @@ class BitwardenClient:
 if __name__ == "__main__":
     bw1 = BitwardenClient()
     bw1.login("user.63b0f8d5-c939-4fe9-94ef-b18300c96a51", "CsQTsbVedEMzR2v9Ji8bFLikgHbo9Y")
-    # bw2 = BitwardenClient()
-    # bw2.login("user.65ba2bf2-52e7-461f-8a60-b199007a8fcd", "4dhEts3hBIsCDVYm5WwGklJ8N7cGZ5")
+    print(bw1.get_status())
     bw1.unlock("CROSBY878697")
     print(bw1.get_status())
-    # print(bw1.list_items())
-    # bw1.lock()
-    # print(bw1.get_status())
+    print(bw1.list_items())
+    bw1.lock()
+    print(bw1.get_status())
     bw1.logout()
-    # print(bw1.get_status())
