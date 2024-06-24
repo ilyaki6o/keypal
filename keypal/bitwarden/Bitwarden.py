@@ -21,7 +21,7 @@ class SessionError(Exception):
 class BitwardenClient:
     """Class for interacting with the Bitwarden password manager."""
 
-    def __init__(self, client_id: str = '', client_secret: str = '') -> None:
+    def __init__(self, client_id='', client_secret=''):
         """Init BitwardenClient class with user's secret info."""
         self.client_id = client_id
         self.client_secret = client_secret
@@ -36,7 +36,7 @@ class BitwardenClient:
         if exit_code:
             raise exception(message)
 
-    def login(self, client_id: str = '', client_secret: str = '') -> None:
+    def login(self, client_id='', client_secret=''):
         """
         Log in to the Bitwarden API using provided client ID and client secret.
 
@@ -67,7 +67,7 @@ class BitwardenClient:
                               "You are not logged in.")
         self.unlocked = False
 
-    def unlock(self, password: str) -> str:
+    def unlock(self, password):
         """
         Unlock Bitwarden vault using provided master password.
 
@@ -109,7 +109,7 @@ class BitwardenClient:
         else:
             raise SessionError("Your vault is locked")
 
-    def search_items_with_uri(self, uri: str):
+    def search_items_with_uri(self, uri):
         """
         Search for Bitwarden items that have a URI starting with the provided URI.
 
@@ -131,11 +131,11 @@ class BitwardenClient:
                 # all_uris.append(uri_obj['uri'])
         # return [url for url in all_uris if url.startswith(uri)]
 
-    def get_status(self) -> str:
+    def get_status(self):
         cmd = "bw status"
         env = {}
         if self.unlocked:
-            env["BW_SESSION"] =  self.session_key
+            env["BW_SESSION"] = self.session_key
         child = pexpect.spawn(cmd, env=os.environ | env)
         data = child.read().decode().splitlines()[-1]
         values = json.loads(data)
@@ -144,7 +144,7 @@ class BitwardenClient:
     def is_locked(self):
         return self.get_status() == 'locked'
 
-    def sync(self) -> None:
+    def sync(self):
         """Synchronize Bitwarden vault."""
         child = pexpect.spawn("bw sync")
         child.expect(pexpect.EOF)
@@ -153,7 +153,7 @@ class BitwardenClient:
                               LoginError,
                               "You are not logged in.")
 
-    def get_password(self, id: str):
+    def get_password(self, id):
         """
         Retrieve the username and password for the Bitwarden item with the provided ID.
 
@@ -174,7 +174,7 @@ class BitwardenClient:
         return ()
 
 
-    def del_password(self, id: str) :
+    def del_password(self, id):
         """
         Delete the Bitwarden item with the provided ID.
 
@@ -193,7 +193,7 @@ class BitwardenClient:
             child.sendline(self.password)
             child.expect(pexpect.EOF)
 
-    def edit_password(self, id: str) -> str:
+    def edit_password(self, id):
         pass
 
 
