@@ -25,25 +25,26 @@ main_menu = InlineKeyboardMarkup(inline_keyboard=[
      InlineKeyboardButton(text="UPDATE", callback_data="update_password")],
 ])
 
-async def select_url(buttons: list[str], column: int):
+async def buttons_list(buttons: list[str], column: int, type_bt: str):
     keyboard = InlineKeyboardBuilder()
     
     set_bt = buttons[column * 5: (column + 1) * 5]
 
     for el in set_bt:
-        keyboard.add(InlineKeyboardButton(text=f"{el}", callback_data=f"url_{el}"))
+        keyboard.add(InlineKeyboardButton(text=f"{el}", callback_data=f"{type_bt}_{el}"))
+
 
     keyboard.adjust(1)
 
     if len(buttons) > 5:
         if column == 0:
-            keyboard.add(InlineKeyboardButton(text="Next", callback_data="next_url"))
+            keyboard.add(InlineKeyboardButton(text="Next", callback_data=f"next_{type_bt}"))
             keyboard.adjust(1)
         elif (len(buttons) - 1) // 5 == column:
-            keyboard.add(InlineKeyboardButton(text="Prev", callback_data="prev_url"))
+            keyboard.add(InlineKeyboardButton(text="Prev", callback_data=f"prev_{type_bt}"))
             keyboard.adjust(1)
         else:
-            keyboard.row(InlineKeyboardButton(text="Prev", callback_data="prev_url"),
-                         InlineKeyboardButton(text="Next", callback_data="next_url"), width=2)
+            keyboard.row(InlineKeyboardButton(text="Prev", callback_data=f"prev_{type_bt}"),
+                         InlineKeyboardButton(text="Next", callback_data=f"next_{type_bt}"), width=2)
 
     return keyboard.as_markup()

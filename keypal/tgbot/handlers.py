@@ -6,6 +6,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from aiogram.enums import ParseMode
 
 import keyboards as kb
 
@@ -92,8 +93,18 @@ async def accept_url(call: CallbackQuery, state: FSMContext):
     correct_url = str(call.data)[4:]
 
     await state.update_data(url=correct_url)
-    await call.message.answer("Enter login from your account")
     await state.set_state(Get_Password.login)
+    await choose_login(call.message, state)
+    await call.answer("")
+
+
+@router.callback_query(F.data.startswith("login_"))
+async def accept_login(call: CallbackQuery, state: FSMContext):
+    correct_login = str(call.data)[6:]
+
+    await state.update_data(login=correct_login)
+    await state.set_state(Get_Password.password)
+    await accept_password(call.message, state)
     await call.answer("")
 
 
@@ -106,9 +117,10 @@ async def next_column(call: CallbackQuery):
     match state:
         case "url":
             url_column += 1
-            await call.message.edit_text("Please select website", reply_markup=await kb.select_url(chosen_urls, url_column))
+            await call.message.edit_text("Please select website", reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
         case "login":
-            pass
+            login_column += 1
+            await call.message.edit_text("Please select login", reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
     await call.answer("")
 
@@ -122,9 +134,10 @@ async def prev_column(call: CallbackQuery):
     match state:
         case "url":
             url_column -= 1
-            await call.message.edit_text("Please select website", reply_markup=await kb.select_url(chosen_urls, url_column))
+            await call.message.edit_text("Please select website", reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
         case "login":
-            pass
+            login_column -= 1
+            await call.message.edit_text("Please select login", reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
     await call.answer("")
 
@@ -185,8 +198,6 @@ async def check_master_password(message: Message, state: FSMContext):
 
 @router.message(Get_Password.url)
 async def choose_url(message: Message, state: FSMContext):
-    await state.update_data(url=message.text)
-    
     global url_column, chosen_urls
     
     url = message.text
@@ -206,12 +217,32 @@ async def choose_url(message: Message, state: FSMContext):
         await main_menu(message)
     elif len(chosen_urls) == 1:
         await message.answer("Selected website {}".format(chosen_urls[0]))
-        await message.answer("Enter login from your account")
+        await state.update_data(url=chosen_urls[0])
         await state.set_state(Get_Password.login)
+        await choose_login(message, state)
     else:
-        await message.answer("Please select website", reply_markup=await kb.select_url(chosen_urls, url_column))
+        await message.answer("Please select website", reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
 
 
-@router.message(Get_Password.login)
 async def choose_login(message: Message, state: FSMContext):
-    await message.answer("Im in login state")
+    global login_column, chosen_logins
+
+    chosen_logins, login_column = [], 0
+    data = await state.get_data()
+
+    chosen_logins = ["ilya1337", "roman228", "igor322", "valera", "dimon", "barabashka"]
+
+    chosen_logins = sorted(chosen_logins)
+    await message.answer("Please select login", reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
+
+
+async def accept_password(message: Message, state: FSMContext):
+    password = "nabsjdasdkh11ase2"
+    await state.update_data(password=password)
+    data = await state.get_data()
+
+    res = "For website: {}\n\nLogin: <code>{}</code>\nPassword: <code>{}</code>".format(data["url"], data["login"], data["password"])
+
+    await message.answer(res, parse_mode=ParseMode.HTML)
+    await state.clear()
+    await main_menu(message)
