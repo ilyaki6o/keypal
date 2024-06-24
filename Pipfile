@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 pytelegrambotapi = "*"
-s6r-bitwarden-cli = "*"
+pexpect = "*"
 
 [dev-packages]
 pydocstyle = "*"

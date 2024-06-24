@@ -3,9 +3,21 @@ from typing import List
 import json
 
 
+class LoginError(Exception):
+    pass
+
+
 class BitwardenClient:
     """A client for interacting with the Bitwarden password manager."""
-    def login(self, client_id: str, client_secret: str) -> None:
+    def __init__(self, client_id: str = '', client_secret: str = '') -> None:
+        self.client_id = client_id
+        self.client_secret = client_secret
+
+    def check_exitstatus(self, exit_code, exception, message):
+        if exit_code:
+            raise exception(message)
+
+    def login(self, client_id: str = '', client_secret: str = '') -> None:
         """
         Log in to the Bitwarden API using the provided client ID and client secret.
 
@@ -16,10 +28,14 @@ class BitwardenClient:
         """
         child = pexpect.spawn("bw login --apikey")
         child.expect("client_id")
-        child.sendline(client_id)
+        child.sendline(client_id or self.client_id)
         child.expect("client_secret")
-        child.sendline(client_secret)
+        child.sendline(client_secret or self.client_secret)
         child.expect(pexpect.EOF)
+        child.close()
+        self.check_exitstatus(child.exitstatus,
+                              LoginError,
+                              "Invalid client_id or client_secret")
 
     def logout(self) -> None:
         """
@@ -27,6 +43,10 @@ class BitwardenClient:
         """
         child = pexpect.spawn("bw logout")
         child.expect(pexpect.EOF)
+        child.close()
+        self.check_exitstatus(child.exitstatus,
+                              LoginError,
+                              "You are not logged in.")
 
     def unlock(self, password: str) -> str:
         """
@@ -37,11 +57,15 @@ class BitwardenClient:
         :return: The session key obtained after unlocking the vault.
         :rtype: str
         """
-        self.password=password
+        self.password = password
         child = pexpect.spawn("bw unlock --raw")
         child.expect("Master password")
         child.sendline(password)
         child.expect(pexpect.EOF)
+        child.close()
+        self.check_exitstatus(child.exitstatus,
+                              LoginError,
+                              "You are not logged in.")
         self.session_key = child.before.splitlines()[-1]
 
     def lock(self) -> None:
@@ -50,6 +74,10 @@ class BitwardenClient:
         """
         child = pexpect.spawn("bw lock")
         child.expect(pexpect.EOF)
+        child.close()
+        self.check_exitstatus(child.exitstatus,
+                              LoginError,
+                              "You are not logged in.")
 
     def search_items_with_uri(self, uri: str):
         """
@@ -73,6 +101,9 @@ class BitwardenClient:
                 all_uris.append(uri_obj['uri'])
         return [url for url in all_uris if url.startswith(uri)]
 
+
+    def get_status(self) -> str:
+        pass
 
     def sync(self) -> None:
         """
@@ -126,11 +157,11 @@ class BitwardenClient:
 
 
 if __name__ == "__main__":
-    bw = BitwardenClient()
-    bw.login("user.63b0f8d5-c939-4fe9-94ef-b18300c96a51", "CsQTsbVedEMzR2v9Ji8bFLikgHbo9Y")
-    bw.unlock("CROSBY878697")
-    #print(bw.get_password('y'))
-    print(bw.search_items_with_uri('k'))
-    #bw.del_password('asvko')
-    bw.lock()
-    bw.logout()
+    bw1 = BitwardenClient()
+    bw1.login("user.63b0f8d5-c939-4fe9-94ef-b18300c96a51", "CsQTsbVedEMzR2v9Ji8bFLikgHbo9Y")
+    # bw2 = BitwardenClient()
+    # bw2.login("user.65ba2bf2-52e7-461f-8a60-b199007a8fcd", "4dhEts3hBIsCDVYm5WwGklJ8N7cGZ5")
+    bw1.unlock("CROSBY878697")
+    bw1.lock()
+    bw1.logout()
+    bw1.logout()
