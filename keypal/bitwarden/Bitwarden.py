@@ -3,6 +3,7 @@
 import pexpect
 from typing import List
 import json
+import os
 
 
 class LoginError(Exception):
@@ -34,10 +35,6 @@ class BitwardenClient:
         """
         if exit_code:
             raise exception(message)
-
-    def add_session_key(self, cmd):
-        """Append session key to command."""
-        return f'/bin/bash -c "BW_SESSION={self.session_key}; {cmd}"'
 
     def login(self, client_id: str = '', client_secret: str = '') -> None:
         """
@@ -103,13 +100,14 @@ class BitwardenClient:
     def list_items(self):
         """Get list of all items in Bitwarden vault."""
         if self.unlocked:
-            cmd = self.add_session_key("bw list items")
-            child = pexpect.spawn(cmd)
+            cmd = "bw list items"
+            child = pexpect.spawn('bw list items',
+                                  env=os.environ | {"BW_SESSION": self.session_key})
             raw_data = child.read().decode()
             data = json.loads(raw_data.splitlines()[-1])
             return data
         else:
-            raise SessionError("You vault is locked")
+            raise SessionError("Your vault is locked")
 
     def search_items_with_uri(self, uri: str):
         """
@@ -135,9 +133,10 @@ class BitwardenClient:
 
     def get_status(self) -> str:
         cmd = "bw status"
+        env = {}
         if self.unlocked:
-            cmd = self.add_session_key(cmd)
-        child = pexpect.spawn(cmd)
+            env["BW_SESSION"] =  self.session_key
+        child = pexpect.spawn(cmd, env=os.environ | env)
         data = child.read().decode().splitlines()[-1]
         values = json.loads(data)
         return values.get('status', '')
