@@ -11,6 +11,12 @@ class LoginError(Exception):
     pass
 
 
+class SessionError(Exception):
+    """Excepion for handling session errors."""
+
+    pass
+
+
 class BitwardenClient:
     """Class for interacting with the Bitwarden password manager."""
 
@@ -96,13 +102,14 @@ class BitwardenClient:
 
     def list_items(self):
         """Get list of all items in Bitwarden vault."""
-        data = []
         if self.unlocked:
             cmd = self.add_session_key("bw list items")
             child = pexpect.spawn(cmd)
             raw_data = child.read().decode()
             data = json.loads(raw_data.splitlines()[-1])
-        return data
+            return data
+        else:
+            raise SessionError("You vault is locked")
 
     def search_items_with_uri(self, uri: str):
         """
@@ -193,11 +200,19 @@ class BitwardenClient:
 
 if __name__ == "__main__":
     bw1 = BitwardenClient()
+    try:
+        bw1.lock()
+    except Exception as e:
+        print(e)
     bw1.login("user.63b0f8d5-c939-4fe9-94ef-b18300c96a51", "CsQTsbVedEMzR2v9Ji8bFLikgHbo9Y")
     print(bw1.get_status())
     bw1.unlock("CROSBY878697")
     print(bw1.get_status())
     print(bw1.list_items())
     bw1.lock()
+    try:
+        bw1.list_items()
+    except Exception as e:
+        print(e)
     print(bw1.get_status())
     bw1.logout()
