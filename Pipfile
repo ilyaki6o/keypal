@@ -7,6 +7,7 @@ name = "pypi"
 pytelegrambotapi = "*"
 s6r-bitwarden-cli = "*"
 aiogram = "*"
+validators = "*"
 
 [dev-packages]
 pydocstyle = "*"

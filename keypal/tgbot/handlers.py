@@ -1,5 +1,7 @@
 # from ..bitwarden import Bitwarden as bitwd
 # from pexpect import exceptions as pex_exc
+from urllib.parse import urlparse
+import validators
 
 from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
@@ -22,6 +24,8 @@ urls = ["www.google.com",
         "fdsakjdas.google.com",
         "akjoiqwio.google.com",
         ]
+
+meneger = {"www.google.com": {"ilya": "askdjlashj2123"}}
 
 
 router = Router()
@@ -46,6 +50,12 @@ class Password_flow(StatesGroup):
     login = State()
     password = State()
     work_type = State()
+
+
+class Set_Password(StatesGroup):
+    url = State()
+    login = State()
+    password = State()
 
 
 ################# Commands
@@ -98,6 +108,13 @@ async def update_password(call: CallbackQuery, state: FSMContext):
     await call.answer('')
 
 
+@router.callback_query(F.data == "set_password")
+async def set_password(call: CallbackQuery, state:FSMContext):
+    await call.message.answer("Enter the address of the site for which you want to save the password")
+    await state.set_state(Set_Password.url)
+    await call.answer("")
+
+
 @router.callback_query(F.data.startswith("url_"))
 async def accept_url(call: CallbackQuery, state: FSMContext):
     correct_url = str(call.data)[4:]
@@ -147,6 +164,22 @@ async def prev_column(call: CallbackQuery):
         case "login":
             login_column -= 1
             await call.message.edit_text("Please select login", reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
+
+    await call.answer("")
+
+
+@router.callback_query(F.data.startswith("update_exist_password_"))
+async def chenge_exist_password(call: CallbackQuery, state: FSMContext):
+    type_bt = str(call.data)[-3:]
+
+    match type_bt:
+        case "yes":
+            await call.message.answer("Please enter new password")
+            await state.set_state(Set_Password.password)
+        case "_no":
+            await call.message.edit_text("Adding a password is canceled")
+            await state.clear()
+            await main_menu(call.message)
 
     await call.answer("")
 
@@ -271,3 +304,39 @@ async def send_password(message: Message, state: FSMContext):
 async def change_password(message: Message, state: FSMContext):
     await state.update_data(password=message.text)
     await send_password(message, state)
+
+
+@router.message(Set_Password.password)
+async def set_new_password(message: Message, state: FSMContext):
+    await state.update_data(password=message.text)
+    await send_password(message, state)
+
+
+@router.message(Set_Password.url)
+async def url_for_set(message: Message, state: FSMContext):
+    url = str(message.text)
+
+    if validators.url(url):
+        url = urlparse(url).netloc
+        url = '.'.join(url.split('.')[-2:])
+
+    await state.update_data(url=url)
+    
+    await message.answer("Enter the login of the account on this website for which you want to save a password")
+    await state.set_state(Set_Password.login)
+
+
+@router.message(Set_Password.login)
+async def login_for_set(message: Message, state: FSMContext):
+    login = str(message.text)
+    await state.update_data(login=login)
+    data = await state.get_data()
+    url = data["url"]
+
+    if url in meneger and login in meneger[url]:
+        await message.answer("For this website, an account with this login is already recorded.\n"
+                             + "Would you like to update your password?", reply_markup=kb.update_exist_password)
+    else:
+        await message.answer("Enter the password for account on website {}\n".format(url)
+                             + "Login: {}".format(login))
+        await state.set_state(Set_Password.password)

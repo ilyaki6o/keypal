@@ -25,6 +25,13 @@ main_menu = InlineKeyboardMarkup(inline_keyboard=[
      InlineKeyboardButton(text="UPDATE", callback_data="update_password")],
 ])
 
+
+update_exist_password = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="YES", callback_data="update_exist_password_yes"),
+     InlineKeyboardButton(text="NO", callback_data="update_exist_password_no")]
+])
+
+
 async def buttons_list(buttons: list[str], column: int, type_bt: str):
     keyboard = InlineKeyboardBuilder()
     
