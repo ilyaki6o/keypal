@@ -5,7 +5,11 @@ import json
 
 class BitwardenClient:
     """A client for interacting with the Bitwarden password manager."""
-    def login(self, client_id: str, client_secret: str) -> None:
+    def __init__(self, client_id: str = '', client_secret: str = '') -> None:
+        self.client_id = client_id
+        self.client_secret = client_secret
+
+    def login(self, client_id: str = '', client_secret: str = '') -> None:
         """
         Log in to the Bitwarden API using the provided client ID and client secret.
 
@@ -16,9 +20,9 @@ class BitwardenClient:
         """
         child = pexpect.spawn("bw login --apikey")
         child.expect("client_id")
-        child.sendline(client_id)
+        child.sendline(client_id or self.client_id)
         child.expect("client_secret")
-        child.sendline(client_secret)
+        child.sendline(client_secret or self.client_secret)
         child.expect(pexpect.EOF)
 
     def logout(self) -> None:
@@ -37,7 +41,7 @@ class BitwardenClient:
         :return: The session key obtained after unlocking the vault.
         :rtype: str
         """
-        self.password=password
+        self.password = password
         child = pexpect.spawn("bw unlock --raw")
         child.expect("Master password")
         child.sendline(password)
@@ -73,6 +77,9 @@ class BitwardenClient:
                 all_uris.append(uri_obj['uri'])
         return [url for url in all_uris if url.startswith(uri)]
 
+
+    def get_status(self) -> str:
+        pass
 
     def sync(self) -> None:
         """
