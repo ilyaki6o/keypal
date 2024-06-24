@@ -129,9 +129,12 @@ class BitwardenClient:
     def get_status(self) -> str:
         cmd = "bw status"
         if self.unlocked:
-            self.add_session_key(cmd)
+            cmd = self.add_session_key(cmd)
+        print(cmd)
         child = pexpect.spawn(cmd)
-        values = json.loads(child.read().decode())
+        data = child.read().decode().splitlines()[-1]
+        print('BBB', data)
+        values = json.loads(data)
         return values.get('status', '')
 
     def is_locked(self):
@@ -161,7 +164,7 @@ class BitwardenClient:
                 child.sendline(self.password)
                 response = child.read().decode()
         
-            data = json.loads(response[response.find('{'):])
+            data = json.loads(response[response.find(''):])
             login = data["login"]
             return (login["username"], login["password"])
         return ()
@@ -179,7 +182,7 @@ class BitwardenClient:
                 child.expect("Master password:")
                 child.sendline(self.password)
                 response = child.read().decode()
-            data = json.loads(response[response.find('{'):])
+            data = json.loads(response[response.find(''):])
             id_del = data["id"]
             child = pexpect.spawn(f"bw  delete item {id_del}")
             child.expect("Master password")
@@ -196,6 +199,9 @@ if __name__ == "__main__":
     # bw2 = BitwardenClient()
     # bw2.login("user.65ba2bf2-52e7-461f-8a60-b199007a8fcd", "4dhEts3hBIsCDVYm5WwGklJ8N7cGZ5")
     bw1.unlock("CROSBY878697")
-    print(bw1.list_items())
-    bw1.lock()
+    print(bw1.get_status())
+    # print(bw1.list_items())
+    # bw1.lock()
+    # print(bw1.get_status())
     bw1.logout()
+    # print(bw1.get_status())
