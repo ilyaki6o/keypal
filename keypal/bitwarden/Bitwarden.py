@@ -233,11 +233,21 @@ class BitwardenClient:
             return new_password
 
     def generate_password(self):
+        """Generate password with length of 14 symbols containing letters and digits."""
         child = pexpect.spawn("bw generate")
         password = child.read()
         child.expect(pexpect.EOF)
         child.close()
         return password.decode().splitlines()[-1]
+
+    def generate_passphrase(self):
+        """Generate passphrase containing 3 words split by '-'."""
+        child = pexpect.spawn("bw generate --passphrase")
+        passphrase = child.read()
+        child.expect(pexpect.EOF)
+        child.close()
+        return passphrase.decode().splitlines()[-1]
+
 
 if __name__ == "__main__":
     bw1 = BitwardenClient()
@@ -251,4 +261,6 @@ if __name__ == "__main__":
     print(bw1.list_items())
     bw1.del_password_by_id(new_password['id'])
     print(bw1.list_items())
+    print(bw1.generate_password())
+    print(bw1.generate_passphrase())
     bw1.logout()
