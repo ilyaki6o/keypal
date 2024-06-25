@@ -114,27 +114,23 @@ class BitwardenClient:
         else:
             raise SessionError("Your vault is locked")
 
-    def search_items_with_uri(self, uri):
+    def search_items_with_uri_part(self, uri_part):
         """
-        Search for Bitwarden items that have a URI starting with the provided URI.
+        Search for Bitwarden items that have a URI containing with the provided URI part.
 
         :param uri: URI to search for.
         :type uri: str
         :return: List of URIs that match the search criteria.
         :rtype: list
         """
-        # with pexpect.spawn("bw list items") as child:
-            # child.expect("Master password:")
-            # child.sendline(self.password)
-            # response = child.read().decode()
-        # json_start = response.find('')
-        # json_string = response[json_start:]
-        # items = json.loads(json_string)
-        # all_uris=[]
-        # for item in items:
-            # for uri_obj in item['login']['uris']:
-                # all_uris.append(uri_obj['uri'])
-        # return [url for url in all_uris if url.startswith(uri)]
+        data = self.list_items()
+        res = []
+        for item in data:
+            login = item['login']
+            uris = login['uris']
+            if any(uri_part in uri['uri'] for uri in uris):
+                res.append(item.copy())
+        return res
 
     def get_status(self):
         """Get current status of Bitwarden vault."""
@@ -224,5 +220,7 @@ if __name__ == "__main__":
     bw1.unlock("CROSBY878697")
     print(bw1.list_items())
     print(bw1.session_key)
-    bw1.create_password("google.com", 'pirat', 'marmelad')
-    print(bw1.list_items())
+    print(bw1.search_items_with_uri_part('goo'))
+    # bw1.create_password("google.com", 'pirat', 'marmelad')
+    # print(bw1.list_items())
+    bw1.logout()
