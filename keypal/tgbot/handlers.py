@@ -1,3 +1,4 @@
+"""All logic of telegram bot."""
 # from ..bitwarden import Bitwarden as bitwd
 # from pexpect import exceptions as pex_exc
 from urllib.parse import urlparse
@@ -11,6 +12,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 
 from . import keyboards as kb
+
 
 urls = ["www.google.com",
         "calendar.google.com",
@@ -27,7 +29,6 @@ urls = ["www.google.com",
 
 meneger = {"www.google.com": {"ilya": "askdjlashj2123"}}
 
-
 router = Router()
 bw = ''
 url_column = 0
@@ -37,15 +38,21 @@ chosen_logins = []
 
 
 class User(StatesGroup):
+    """State sequence for user authorization."""
+
     client_id = State()
     client_secret = State()
 
 
 class MasterP(StatesGroup):
+    """State for start session."""
+
     master_password = State()
 
 
 class Password_flow(StatesGroup):
+    """State sequence for get and update password."""
+
     url = State()
     login = State()
     password = State()
@@ -53,6 +60,8 @@ class Password_flow(StatesGroup):
 
 
 class Set_Password(StatesGroup):
+    """State sequence for set password."""
+
     url = State()
     login = State()
     password = State()
@@ -63,6 +72,7 @@ class Set_Password(StatesGroup):
 
 @router.message(CommandStart())
 async def start(message: Message):
+    """/start command handler."""
     await message.answer("Hello, its KeyPal - telegram bot wrapper for Bitwarden password manager.")
     await message.answer("Do you already have a Bitwarden account?", reply_markup=kb.start)
 
@@ -72,14 +82,24 @@ async def start(message: Message):
 
 @router.callback_query(F.data == "log_in")
 async def log_in(call: CallbackQuery, state: FSMContext):
+    """
+    Log in button handler.
+
+    Start authorization process.
+    """
     await request_client_id(call.message, state)
     await call.answer('')
 
 
 @router.callback_query(F.data == "registration")
 async def registration(call: CallbackQuery):
-    await call.message.answer("Let's set you up with a Bitwarden account."
-                              + "To register an account on the Bitwarden website click on the button below.",
+    """
+    "No" button hendler when client says he doesn't have a bitwarden account.
+
+    Offers to create an account and log in.
+    """
+    await call.message.answer("Let's set you up with a Bitwarden account.",
+                              "To register an account on the Bitwarden website click on the button below.",
                               reply_markup=kb.reg_account)
     await call.message.answer("Click the button below when you register your account to log in.",
                               reply_markup=kb.log_in)
@@ -88,12 +108,23 @@ async def registration(call: CallbackQuery):
 
 @router.callback_query(F.data == "start_session")
 async def master_password(call: CallbackQuery, state: FSMContext):
-    await state.set_state(MasterP.master_password) 
+    """
+    Start session button hendler.
+
+    Check client master password.
+    """
+    await state.set_state(MasterP.master_password)
     await call.message.answer("Please enter your master password")
     await call.answer('')
 
+
 @router.callback_query(F.data == "get_password")
 async def get_password(call: CallbackQuery, state: FSMContext):
+    """
+    'GET' button on main menu hendler.
+
+    Requests the address of the website where you need to enter your password.
+    """
     await call.message.answer("Enter the url to search for the password")
     await state.set_state(Password_flow.url)
     await state.update_data(work_type=str(call.data))
@@ -102,6 +133,11 @@ async def get_password(call: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "update_password")
 async def update_password(call: CallbackQuery, state: FSMContext):
+    """
+    'UPDATE' button on main menu hendler.
+
+    Requests the address of the website where you need to update your password.
+    """
     await call.message.answer("Enter the url to search for the password")
     await state.set_state(Password_flow.url)
     await state.update_data(work_type=str(call.data))
@@ -109,7 +145,12 @@ async def update_password(call: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == "set_password")
-async def set_password(call: CallbackQuery, state:FSMContext):
+async def set_password(call: CallbackQuery, state: FSMContext):
+    """
+    'SET' button in main menu handler.
+
+    Requests the address of the website where you want to create new account.
+    """
     await call.message.answer("Enter the address of the site for which you want to save the password")
     await state.set_state(Set_Password.url)
     await call.answer("")
@@ -117,6 +158,11 @@ async def set_password(call: CallbackQuery, state:FSMContext):
 
 @router.callback_query(F.data.startswith("url_"))
 async def accept_url(call: CallbackQuery, state: FSMContext):
+    """
+    Url address selection button handler.
+
+    Catch url button press and save url in memmory.
+    """
     correct_url = str(call.data)[4:]
 
     await state.update_data(url=correct_url)
@@ -127,6 +173,11 @@ async def accept_url(call: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("login_"))
 async def accept_login(call: CallbackQuery, state: FSMContext):
+    """
+    Login selection button handler.
+
+    Catch login button press and save login in memmory.
+    """
     correct_login = str(call.data)[6:]
 
     await state.update_data(login=correct_login)
@@ -136,6 +187,11 @@ async def accept_login(call: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("next_"))
 async def next_column(call: CallbackQuery):
+    """
+    "Next" button hendler.
+
+    Generate next page of buttons (url or login).
+    """
     global chosen_urls, url_column, chosen_logins, login_column
 
     state = str(call.data)[5:]
@@ -143,16 +199,23 @@ async def next_column(call: CallbackQuery):
     match state:
         case "url":
             url_column += 1
-            await call.message.edit_text("Please select website", reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
+            await call.message.edit_text("Please select website",
+                                         reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
         case "login":
             login_column += 1
-            await call.message.edit_text("Please select login", reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
+            await call.message.edit_text("Please select login",
+                                         reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
     await call.answer("")
 
 
 @router.callback_query(F.data.startswith("prev_"))
 async def prev_column(call: CallbackQuery):
+    """
+    "Prev" button hendler.
+
+    Generate previous page of buttons (url or login).
+    """
     global chosen_urls, url_column, chosen_logins, login_column
 
     state = str(call.data)[5:]
@@ -160,16 +223,24 @@ async def prev_column(call: CallbackQuery):
     match state:
         case "url":
             url_column -= 1
-            await call.message.edit_text("Please select website", reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
+            await call.message.edit_text("Please select website",
+                                         reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
         case "login":
             login_column -= 1
-            await call.message.edit_text("Please select login", reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
+            await call.message.edit_text("Please select login",
+                                         reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
     await call.answer("")
 
 
 @router.callback_query(F.data.startswith("update_exist_password_"))
 async def chenge_exist_password(call: CallbackQuery, state: FSMContext):
+    """
+    "Yes" and 'No' button hendler for keyboard while set new password.
+
+    With 'Yes' request new password.
+    With 'No' stop set password process and display main menu.
+    """
     type_bt = str(call.data)[-3:]
 
     match type_bt:
@@ -188,15 +259,18 @@ async def chenge_exist_password(call: CallbackQuery, state: FSMContext):
 
 
 async def start_session(message: Message):
+    """Display 'start session' button."""
     await message.answer("Click the button below to start new session", reply_markup=kb.new_session)
 
 
 async def request_client_id(message: Message, state: FSMContext):
-    await state.set_state(User.client_id) 
+    """Request client_id."""
+    await state.set_state(User.client_id)
     await message.answer("Please enter your client_id")
 
 
 async def main_menu(message: Message):
+    """Display main menu."""
     await message.answer("Welcome to KeyPal", reply_markup=kb.main_menu)
 
 
@@ -205,6 +279,7 @@ async def main_menu(message: Message):
 
 @router.message(User.client_id)
 async def request_client_secret(message: Message, state: FSMContext):
+    """Catch message with client_id and request client_secret."""
     await state.update_data(client_id=message.text)
     await state.set_state(User.client_secret)
     await message.answer("Please enter your client_secret")
@@ -212,6 +287,7 @@ async def request_client_secret(message: Message, state: FSMContext):
 
 @router.message(User.client_secret)
 async def auth_check(message: Message, state: FSMContext):
+    """Catch message with client_secret and make authorization check."""
     await state.update_data(client_secret=message.text)
     data = await state.get_data()
 
@@ -222,13 +298,14 @@ async def auth_check(message: Message, state: FSMContext):
     #     message.answer("Login or client_secret is wrong. Please try log in again.")
     #     await request_client_id(message, state)
     # else:
-    
+
     await state.clear()
     await start_session(message)
 
 
 @router.message(MasterP.master_password)
 async def check_master_password(message: Message, state: FSMContext):
+    """Catch message with master password and if its correct."""
     await state.update_data(master_password=message.text)
     data = await state.get_data()
 
@@ -240,8 +317,14 @@ async def check_master_password(message: Message, state: FSMContext):
 
 @router.message(Password_flow.url)
 async def choose_url(message: Message, state: FSMContext):
+    """
+    Catch message with url string and hendle it.
+
+    Check if url with this substring exist and displey keyboard with appropriate urls.
+    Request to choose url.
+    """
     global url_column, chosen_urls
-    
+
     url = message.text
     cur_urls = urls
     chosen_urls = []
@@ -263,10 +346,12 @@ async def choose_url(message: Message, state: FSMContext):
         await state.set_state(Password_flow.login)
         await choose_login(message, state)
     else:
-        await message.answer("Please select website", reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
+        await message.answer("Please select website",
+                             reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
 
 
 async def choose_login(message: Message, state: FSMContext):
+    """Displey account logins on selected site and request to choose login."""
     global login_column, chosen_logins
 
     chosen_logins, login_column = [], 0
@@ -275,10 +360,12 @@ async def choose_login(message: Message, state: FSMContext):
     chosen_logins = ["ilya1337", "roman228", "igor322", "valera", "dimon", "barabashka"]
 
     chosen_logins = sorted(chosen_logins)
-    await message.answer("Please select login", reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
+    await message.answer("Please select login",
+                         reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
 
 async def check_work_type(message: Message, state: FSMContext):
+    """Determine whether it's a 'GET' or 'UPDATE' process."""
     password = "asdasdas123123asdasd"
     await state.update_data(password=password)
     data = await state.get_data()
@@ -291,9 +378,12 @@ async def check_work_type(message: Message, state: FSMContext):
 
 
 async def send_password(message: Message, state: FSMContext):
+    """Displat login and password for selected website."""
     data = await state.get_data()
 
-    res = "For website: {}\n\nLogin: <code>{}</code>\nPassword: <code>{}</code>".format(data["url"], data["login"], data["password"])
+    res = "For website: {}\n\nLogin: <code>{}</code>\nPassword: <code>{}</code>".format(data["url"],
+                                                                                        data["login"],
+                                                                                        data["password"])
 
     await message.answer(res, parse_mode=ParseMode.HTML)
     await state.clear()
@@ -302,18 +392,21 @@ async def send_password(message: Message, state: FSMContext):
 
 @router.message(Password_flow.password)
 async def change_password(message: Message, state: FSMContext):
+    """Catch updated password and save it in memmory."""
     await state.update_data(password=message.text)
     await send_password(message, state)
 
 
 @router.message(Set_Password.password)
 async def set_new_password(message: Message, state: FSMContext):
+    """Catch password for new account and save in in memmory."""
     await state.update_data(password=message.text)
     await send_password(message, state)
 
 
 @router.message(Set_Password.url)
 async def url_for_set(message: Message, state: FSMContext):
+    """Catch url string, save it and request login for new account."""
     url = str(message.text)
 
     if validators.url(url):
@@ -321,13 +414,19 @@ async def url_for_set(message: Message, state: FSMContext):
         url = '.'.join(url.split('.')[-2:])
 
     await state.update_data(url=url)
-    
+
     await message.answer("Enter the login of the account on this website for which you want to save a password")
     await state.set_state(Set_Password.login)
 
 
 @router.message(Set_Password.login)
 async def login_for_set(message: Message, state: FSMContext):
+    """
+    Catch login of new account and hendle it.
+
+    If pare <url, login> already exist then request to update password for pare.
+    Else request password for new account.
+    """
     login = str(message.text)
     await state.update_data(login=login)
     data = await state.get_data()

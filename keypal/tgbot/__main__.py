@@ -1,3 +1,4 @@
+"""Main file of telegram bot."""
 import asyncio
 import logging
 
@@ -9,7 +10,9 @@ TOKEN = "7342917304:AAG0OneBgGCglwp07pD3TXw5tNPwMCf1E2o"
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+
 async def main():
+    """Include routert and start bot."""
     dp.include_router(router)
     await dp.start_polling(bot)
 

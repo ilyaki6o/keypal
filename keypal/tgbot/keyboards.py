@@ -1,9 +1,10 @@
+"""All keyboards."""
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
                            InlineKeyboardMarkup, InlineKeyboardButton)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 start = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Yes", callback_data="log_in"), 
+    [InlineKeyboardButton(text="Yes", callback_data="log_in"),
      InlineKeyboardButton(text="No", callback_data="registration")]
 ])
 
@@ -33,13 +34,21 @@ update_exist_password = InlineKeyboardMarkup(inline_keyboard=[
 
 
 async def buttons_list(buttons: list[str], column: int, type_bt: str):
+    """
+    Generate a keyboard with multiple pages of buttons.
+
+    Function take 5 string starting with cloumn * 5 from buttons and make keyboard.
+
+    :param buttons: name of buttons
+    :param column: current page of buttons
+    :param type_bt: type of button (url, login)
+    """
     keyboard = InlineKeyboardBuilder()
-    
+
     set_bt = buttons[column * 5: (column + 1) * 5]
 
     for el in set_bt:
         keyboard.add(InlineKeyboardButton(text=f"{el}", callback_data=f"{type_bt}_{el}"))
-
 
     keyboard.adjust(1)
 
