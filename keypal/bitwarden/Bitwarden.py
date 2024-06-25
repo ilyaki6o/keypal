@@ -1,9 +1,9 @@
 """Module for interaction with Bitwarden cli."""
 
 import pexpect
-from typing import List
 import json
 import os
+import tempfile
 
 
 class LoginError(Exception):
@@ -26,6 +26,7 @@ class BitwardenClient:
         self.client_id = client_id
         self.client_secret = client_secret
         self.unlocked = False
+        self.spoiled_data = True
 
     def check_exitstatus(self, exit_code, exception, message):
         """
@@ -100,11 +101,15 @@ class BitwardenClient:
     def list_items(self):
         """Get list of all items in Bitwarden vault."""
         if self.unlocked:
-            cmd = "bw list items"
-            child = pexpect.spawn('bw list items',
-                                  env=os.environ | {"BW_SESSION": self.session_key})
-            raw_data = child.read().decode()
-            data = json.loads(raw_data.splitlines()[-1])
+            if self.spoiled_data:
+                child = pexpect.spawn('bw list items',
+                                      env=os.environ | {"BW_SESSION": self.session_key})
+                raw_data = child.read().decode()
+                data = json.loads(raw_data.splitlines()[-1])
+                self.password_data = data
+                self.spoiled_data = False
+            else:
+                data = self.password_data
             return data
         else:
             raise SessionError("Your vault is locked")
@@ -132,6 +137,7 @@ class BitwardenClient:
         # return [url for url in all_uris if url.startswith(uri)]
 
     def get_status(self):
+        """Get current status of Bitwarden vault."""
         cmd = "bw status"
         env = {}
         if self.unlocked:
@@ -141,9 +147,6 @@ class BitwardenClient:
         values = json.loads(data)
         return values.get('status', '')
 
-    def is_locked(self):
-        return self.get_status() == 'locked'
-
     def sync(self):
         """Synchronize Bitwarden vault."""
         child = pexpect.spawn("bw sync")
@@ -152,66 +155,74 @@ class BitwardenClient:
         self.check_exitstatus(child.exitstatus,
                               LoginError,
                               "You are not logged in.")
+        self.spoiled_data = True
+        if self.unlocked:
+            self.list_items()
 
-    def get_password(self, id):
+    def get_password_by_id(self, id):
         """
-        Retrieve the username and password for the Bitwarden item with the provided ID.
+        Retrieve username and password for the Bitwarden item with the provided ID.
 
         :param id: The ID of the Bitwarden item.
         :type id: str
-        :return: A tuple containing the username and password, or an empty tuple if the item is not found.
+        :return: Tuple containing the username and password, or empty tuple if item is not found.
         :rtype: tuple
         """
-        if id in self.search_items_with_uri(id):
-            with pexpect.spawn(f"bw get item {id}") as child:
-                child.expect("Master password:")
-                child.sendline(self.password)
-                response = child.read().decode()
-        
-            data = json.loads(response[response.find(''):])
-            login = data["login"]
-            return (login["username"], login["password"])
+        items = self.list_items()
+        for item in items:
+            if item['id'] == id:
+                return (item['login']['username'], item['login']['password'])
         return ()
 
-
-    def del_password(self, id):
+    def del_password_by_id(self, id):
         """
-        Delete the Bitwarden item with the provided ID.
+        Delete Bitwarden item with the provided ID.
 
         :param id: ID of the Bitwarden item to delete.
         :type id: str
         """
-        if id in self.search_items_with_uri(id):
-            with pexpect.spawn(f"bw get item {id}") as child:
-                child.expect("Master password:")
-                child.sendline(self.password)
-                response = child.read().decode()
-            data = json.loads(response[response.find(''):])
-            id_del = data["id"]
-            child = pexpect.spawn(f"bw  delete item {id_del}")
-            child.expect("Master password")
-            child.sendline(self.password)
+        child = pexpect.spawn(f"bw delete item {id}")
+        child.expect(pexpect.EOF)
+        child.close()
+        self.check_exitstatus(child.exitstatus,
+                              Exception,
+                              "Password not found")
+        self.spoiled_data = True
+
+    def create_password(self, uri, username, password):
+        if self.unlock:
+            child = pexpect.spawn("bw get template item",
+                                  env=os.environ | {"BW_SESSION": self.session_key})
+            item_template = child.read().decode().splitlines()[-1]
+            item_template = json.loads(item_template)
             child.expect(pexpect.EOF)
-
-    def edit_password(self, id):
-        pass
-
+            child.close()
+            child = pexpect.spawn("bw get template item.login",
+                                  env=os.environ | {"BW_SESSION": self.session_key})
+            login_template = child.read().decode().splitlines()[-1]
+            login_template = json.loads(login_template)
+            child.expect(pexpect.EOF)
+            child.close()
+            login_template["username"] = username
+            login_template["password"] = password
+            login_template["uris"].append({"match": None, "uri": uri})
+            item_template["name"] = "KeyPal_generated"
+            item_template["login"] = login_template
+            with tempfile.NamedTemporaryFile("w+") as tmp:
+                tmp.write(json.dumps(item_template))
+                tmp.seek(0)
+                child = pexpect.spawn(f'/bin/bash -c "bw encode < {tmp.name}"')
+                encoded_json = child.read().decode().splitlines()[-1]
+            child = pexpect.spawn(f"bw create item {encoded_json}",
+                                  env=os.environ | {"BW_SESSION": self.session_key})
+            child.expect(pexpect.EOF)
+            child.close()
 
 if __name__ == "__main__":
     bw1 = BitwardenClient()
-    try:
-        bw1.lock()
-    except Exception as e:
-        print(e)
     bw1.login("user.63b0f8d5-c939-4fe9-94ef-b18300c96a51", "CsQTsbVedEMzR2v9Ji8bFLikgHbo9Y")
-    print(bw1.get_status())
     bw1.unlock("CROSBY878697")
-    print(bw1.get_status())
     print(bw1.list_items())
-    bw1.lock()
-    try:
-        bw1.list_items()
-    except Exception as e:
-        print(e)
-    print(bw1.get_status())
-    bw1.logout()
+    print(bw1.session_key)
+    bw1.create_password("google.com", 'pirat', 'marmelad')
+    print(bw1.list_items())
