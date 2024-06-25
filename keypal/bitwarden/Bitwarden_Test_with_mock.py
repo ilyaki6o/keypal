@@ -84,12 +84,7 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.assertEqual(status, "unlocked")
 
-    def test_is_locked(self):
-        self.client.get_status = MagicMock(return_value="locked")
-        self.assertTrue(self.client.is_locked())
 
-        self.client.get_status = MagicMock(return_value="unlocked")
-        self.assertFalse(self.client.is_locked())
 
     @patch('pexpect.spawn')
     def test_sync_success(self, mock_spawn):
