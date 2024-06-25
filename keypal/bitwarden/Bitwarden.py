@@ -88,7 +88,7 @@ class BitwardenClient:
         self.session_key = child.before.splitlines()[-1].decode()
         self.unlocked = True
 
-    def lock(self) -> None:
+    def lock(self):
         """Lock the Bitwarden vault."""
         child = pexpect.spawn("bw lock")
         child.expect(pexpect.EOF)
@@ -178,7 +178,7 @@ class BitwardenClient:
         :type id: str
         """
         child = pexpect.spawn(f"bw delete item {id}",
-                                      env=os.environ | {"BW_SESSION": self.session_key})
+                              env=os.environ | {"BW_SESSION": self.session_key})
         child.expect(pexpect.EOF)
         child.close()
         self.check_exitstatus(child.exitstatus,
@@ -232,6 +232,13 @@ class BitwardenClient:
             self.sync()
             return new_password
 
+    def generate_password(self):
+        child = pexpect.spawn("bw generate")
+        password = child.read()
+        child.expect(pexpect.EOF)
+        child.close()
+        return password.decode().splitlines()[-1]
+
 if __name__ == "__main__":
     bw1 = BitwardenClient()
     bw1.login("user.63b0f8d5-c939-4fe9-94ef-b18300c96a51", "CsQTsbVedEMzR2v9Ji8bFLikgHbo9Y")
@@ -241,5 +248,7 @@ if __name__ == "__main__":
     new_password = bw1.create_password("google.com", 'pirat', 'marmelad')
     print(new_password)
     # print(bw1.search_items_with_uri_part('goo'))
-    #print(bw1.list_items())
+    print(bw1.list_items())
+    bw1.del_password_by_id(new_password['id'])
+    print(bw1.list_items())
     bw1.logout()
