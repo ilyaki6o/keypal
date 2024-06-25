@@ -10,7 +10,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 
-import keyboards as kb
+from . import keyboards as kb
 
 urls = ["www.google.com",
         "calendar.google.com",
