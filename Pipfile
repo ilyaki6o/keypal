@@ -4,10 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pytelegrambotapi = "*"
-s6r-bitwarden-cli = "*"
 aiogram = "*"
 validators = "*"
+pexpect = "*"
 
 [dev-packages]
 pydocstyle = "*"
