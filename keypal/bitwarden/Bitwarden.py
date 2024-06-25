@@ -184,8 +184,21 @@ class BitwardenClient:
                               Exception,
                               "Password not found")
         self.spoiled_data = True
+        self.sync()
 
     def create_password(self, uri, username, password):
+        """
+        Create password in Bitwarden vault by uri and username.
+
+        :param uri: network address associated with password
+        :type uri: str
+        :param username: login associated with password
+        :type username: str
+        :password: password
+        :type password: str
+        :return: parsed json object returned by Bitwarden
+        :rtype: Json dictionary
+        """
         if self.unlock:
             child = pexpect.spawn("bw get template item",
                                   env=os.environ | {"BW_SESSION": self.session_key})
@@ -212,7 +225,11 @@ class BitwardenClient:
             child = pexpect.spawn(f"bw create item {encoded_json}",
                                   env=os.environ | {"BW_SESSION": self.session_key})
             child.expect(pexpect.EOF)
+            new_password = child.read().decode().splitlines()[-1]
+            new_password = json.loads(new_password)
             child.close()
+            self.sync()
+            return new_password
 
 if __name__ == "__main__":
     bw1 = BitwardenClient()
@@ -220,7 +237,7 @@ if __name__ == "__main__":
     bw1.unlock("CROSBY878697")
     print(bw1.list_items())
     print(bw1.session_key)
-    print(bw1.search_items_with_uri_part('goo'))
-    # bw1.create_password("google.com", 'pirat', 'marmelad')
-    # print(bw1.list_items())
+    new_password = bw1.create_password("google.com", 'pirat', 'marmelad')
+    # print(bw1.search_items_with_uri_part('goo'))
+    print(bw1.list_items())
     bw1.logout()
