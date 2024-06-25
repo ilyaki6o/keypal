@@ -21,9 +21,10 @@ class SessionError(Exception):
 class BitwardenClient:
     """Class for interacting with the Bitwarden password manager."""
 
-    def __init__(self, client_id='', client_secret=''):
+    def __init__(self, client_dir='', client_id='', client_secret=''):
         """Init BitwardenClient class with user's secret info."""
         self.client_id = client_id
+        self.env_dict = os.environ | {'BITWARDENCLI_APPDATA_DIR': client_dir}
         self.client_secret = client_secret
         self.unlocked = False
         self.spoiled_data = True
@@ -46,7 +47,7 @@ class BitwardenClient:
         :param client_secret: Client secret for the Bitwarden API.
         :type client_secret: str
         """
-        child = pexpect.spawn("bw login --apikey")
+        child = pexpect.spawn("bw login --apikey", env=self.env_dict)
         child.expect("client_id")
         child.sendline(client_id or self.client_id)
         child.expect("client_secret")
@@ -60,7 +61,7 @@ class BitwardenClient:
 
     def logout(self) -> None:
         """Log out from the Bitwarden API."""
-        child = pexpect.spawn("bw logout")
+        child = pexpect.spawn("bw logout", env=self.env_dict)
         child.expect(pexpect.EOF)
         child.close()
         self.check_exitstatus(child.exitstatus,
@@ -77,7 +78,7 @@ class BitwardenClient:
         :return: Session key obtained after unlocking the vault.
         :rtype: str
         """
-        child = pexpect.spawn("bw unlock --raw")
+        child = pexpect.spawn("bw unlock --raw", env=self.env_dict)
         child.expect("Master password")
         child.sendline(password)
         child.expect(pexpect.EOF)
@@ -88,9 +89,9 @@ class BitwardenClient:
         self.session_key = child.before.splitlines()[-1].decode()
         self.unlocked = True
 
-    def lock(self) -> None:
+    def lock(self):
         """Lock the Bitwarden vault."""
-        child = pexpect.spawn("bw lock")
+        child = pexpect.spawn("bw lock", env=self.env_dict)
         child.expect(pexpect.EOF)
         child.close()
         self.check_exitstatus(child.exitstatus,
@@ -103,7 +104,7 @@ class BitwardenClient:
         if self.unlocked:
             if self.spoiled_data:
                 child = pexpect.spawn('bw list items',
-                                      env=os.environ | {"BW_SESSION": self.session_key})
+                                      env=self.env_dict | {"BW_SESSION": self.session_key})
                 raw_data = child.read().decode()
                 data = json.loads(raw_data.splitlines()[-1])
                 self.password_data = data
@@ -138,14 +139,14 @@ class BitwardenClient:
         env = {}
         if self.unlocked:
             env["BW_SESSION"] = self.session_key
-        child = pexpect.spawn(cmd, env=os.environ | env)
+        child = pexpect.spawn(cmd, env=self.env_dict | env)
         data = child.read().decode().splitlines()[-1]
         values = json.loads(data)
         return values.get('status', '')
 
     def sync(self):
         """Synchronize Bitwarden vault."""
-        child = pexpect.spawn("bw sync")
+        child = pexpect.spawn("bw sync", env=self.env_dict)
         child.expect(pexpect.EOF)
         child.close()
         self.check_exitstatus(child.exitstatus,
@@ -178,7 +179,7 @@ class BitwardenClient:
         :type id: str
         """
         child = pexpect.spawn(f"bw delete item {id}",
-                                      env=os.environ | {"BW_SESSION": self.session_key})
+                              env=self.env_dict | {"BW_SESSION": self.session_key})
         child.expect(pexpect.EOF)
         child.close()
         self.check_exitstatus(child.exitstatus,
@@ -202,13 +203,13 @@ class BitwardenClient:
         """
         if self.unlock:
             child = pexpect.spawn("bw get template item",
-                                  env=os.environ | {"BW_SESSION": self.session_key})
+                                  env=self.env_dict | {"BW_SESSION": self.session_key})
             item_template = child.read().decode().splitlines()[-1]
             item_template = json.loads(item_template)
             child.expect(pexpect.EOF)
             child.close()
             child = pexpect.spawn("bw get template item.login",
-                                  env=os.environ | {"BW_SESSION": self.session_key})
+                                  env=self.env_dict | {"BW_SESSION": self.session_key})
             login_template = child.read().decode().splitlines()[-1]
             login_template = json.loads(login_template)
             child.expect(pexpect.EOF)
@@ -224,7 +225,7 @@ class BitwardenClient:
                 child = pexpect.spawn(f'/bin/bash -c "bw encode < {tmp.name}"')
                 encoded_json = child.read().decode().splitlines()[-1]
             child = pexpect.spawn(f"bw create item {encoded_json}",
-                                  env=os.environ | {"BW_SESSION": self.session_key})
+                                  env=self.env_dict | {"BW_SESSION": self.session_key})
             new_password = child.read().decode().splitlines()[-1]
             new_password = json.loads(new_password)
             child.expect(pexpect.EOF)
@@ -232,14 +233,32 @@ class BitwardenClient:
             self.sync()
             return new_password
 
+    def generate_password(self):
+        """Generate password with length of 14 symbols containing letters and digits."""
+        child = pexpect.spawn("bw generate")
+        password = child.read()
+        child.expect(pexpect.EOF)
+        child.close()
+        return password.decode().splitlines()[-1]
+
+    def generate_passphrase(self):
+        """Generate passphrase containing 3 words split by '-'."""
+        child = pexpect.spawn("bw generate --passphrase")
+        passphrase = child.read()
+        child.expect(pexpect.EOF)
+        child.close()
+        return passphrase.decode().splitlines()[-1]
+
+
 if __name__ == "__main__":
-    bw1 = BitwardenClient()
+    bw1 = BitwardenClient('Igor')
+    bw2 = BitwardenClient('Roma')
     bw1.login("user.63b0f8d5-c939-4fe9-94ef-b18300c96a51", "CsQTsbVedEMzR2v9Ji8bFLikgHbo9Y")
+    bw2.login("user.65ba2bf2-52e7-461f-8a60-b199007a8fcd", "4dhEts3hBIsCDVYm5WwGklJ8N7cGZ5")
     bw1.unlock("CROSBY878697")
-    #print(bw1.list_items())
-    #print(bw1.session_key)
-    new_password = bw1.create_password("google.com", 'pirat', 'marmelad')
-    print(new_password)
-    # print(bw1.search_items_with_uri_part('goo'))
-    #print(bw1.list_items())
+    bw2.unlock("passwordforbitwarden")
+    print(bw1.list_items())
+    bw2.create_password("google.com", "roma", "aaaaaaa")
+    print(bw2.list_items())
     bw1.logout()
+    bw2.logout()
