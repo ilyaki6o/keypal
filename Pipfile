@@ -11,6 +11,10 @@ pexpect = "*"
 [dev-packages]
 pydocstyle = "*"
 flake8 = "*"
+doit = "*"
+build = "*"
+babel = "*"
+sphinx = "*"
 
 [requires]
 python_version = "3.12"
