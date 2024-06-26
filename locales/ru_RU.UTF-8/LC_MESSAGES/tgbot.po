@@ -1,0 +1,177 @@
+# Russian (Russia) translations for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-06-26 11:21+0300\n"
+"PO-Revision-Date: 2024-06-25 22:12+0300\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ru_RU\n"
+"Language-Team: ru_RU <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: keypal/tgbot/handlers.py:95
+msgid "Hello, its KeyPal - telegram bot wrapper for Bitwarden password manager."
+msgstr "Здравствуйте, это KeyPal - телеграм-бот для менеджера паролей Bitwarden."
+
+#: keypal/tgbot/handlers.py:96
+msgid "Do you already have a Bitwarden account?"
+msgstr "У вас уже есть аккаунт Bitwarden?"
+
+#: keypal/tgbot/handlers.py:101
+msgid "Please choose locale"
+msgstr "Пожалуйста, выберите локализацию"
+
+#: keypal/tgbot/handlers.py:140
+msgid "Let's set you up with a Bitwarden account.\n"
+msgstr "Давайте создадим вам аккаунт в Bitwarden.\n"
+
+#: keypal/tgbot/handlers.py:141
+msgid "To register an account on the Bitwarden website click on the button below."
+msgstr "Чтобы зарегистрировать аккаунт на сайте Bitwarden, нажмите на кнопку ниже."
+
+#: keypal/tgbot/handlers.py:143
+msgid "Click the button below when you register your account to log in."
+msgstr ""
+"Нажмите кнопку ниже после регистрации учетной записи, чтобы войти в "
+"систему."
+
+#: keypal/tgbot/handlers.py:156
+msgid "Please enter your master password"
+msgstr "Пожалуйста, введите свой мастер-пароль"
+
+#: keypal/tgbot/handlers.py:167 keypal/tgbot/handlers.py:180
+msgid "Enter the url to search for the password"
+msgstr "Введите url сайта для поиска пароля"
+
+#: keypal/tgbot/handlers.py:193
+msgid "Enter the address of the site for which you want to save the password"
+msgstr "Введите адрес сайта, для которого вы хотите сохранить пароль."
+
+#: keypal/tgbot/handlers.py:241 keypal/tgbot/handlers.py:265
+#: keypal/tgbot/handlers.py:388
+msgid "Please select website"
+msgstr "Пожалуйста, выберите веб-сайт"
+
+#: keypal/tgbot/handlers.py:245 keypal/tgbot/handlers.py:269
+#: keypal/tgbot/handlers.py:402
+msgid "Please select login"
+msgstr "Пожалуйста, выберите логин"
+
+#: keypal/tgbot/handlers.py:287 keypal/tgbot/handlers.py:415
+msgid "Please enter new password"
+msgstr "Пожалуйста, введите новый пароль"
+
+#: keypal/tgbot/handlers.py:290
+msgid "Adding a password is canceled"
+msgstr "Добавление пароля отменено"
+
+#: keypal/tgbot/handlers.py:302
+msgid "Click the button below to start new session"
+msgstr "Нажмите кнопку ниже, чтобы начать новую сессию"
+
+#: keypal/tgbot/handlers.py:308
+msgid "Please enter your client_id"
+msgstr "Пожалуйста, введите client_id"
+
+#: keypal/tgbot/handlers.py:313
+msgid "Welcome to KeyPal"
+msgstr "Добро пожаловать в KeyPal"
+
+#: keypal/tgbot/handlers.py:324
+msgid "Please enter your client_secret"
+msgstr "Пожалуйста, введите ваш client_secret"
+
+#: keypal/tgbot/handlers.py:379
+msgid "There are no records for this website"
+msgstr "Для этого сайта нет записей"
+
+#: keypal/tgbot/handlers.py:383
+msgid "Selected website {}"
+msgstr "Выбран сайт {}"
+
+#: keypal/tgbot/handlers.py:423
+msgid ""
+"For website: {}\n"
+"\n"
+"Login: <code>{}</code>\n"
+"Password: <code>{}</code>"
+msgstr ""
+"Для веб-сайта: {}\n"
+"\n"
+"Логин: <code>{}</code>\n"
+"Пароль: <code>{}</code>"
+
+#: keypal/tgbot/handlers.py:457
+msgid ""
+"Enter the login of the account on this website for which you want to save"
+" a password"
+msgstr ""
+"Введите логин учетной записи на этом сайте, для которой вы хотите "
+"сохранить пароль"
+
+#: keypal/tgbot/handlers.py:475
+msgid "For this website, an account with this login is already recorded.\n"
+msgstr "Для этого сайта учетная запись с таким логином уже зарегистрирована.\n"
+
+#: keypal/tgbot/handlers.py:476
+msgid "Would you like to update your password?"
+msgstr "Вы хотите обновить свой пароль?"
+
+#: keypal/tgbot/handlers.py:478
+msgid "Enter the password for account on website {}\n"
+msgstr "Введите пароль для учетной записи на сайте {}\n"
+
+#: keypal/tgbot/handlers.py:479
+msgid "Login: {}"
+msgstr "Логин: {}"
+
+#: keypal/tgbot/keyboards.py:9 keypal/tgbot/keyboards.py:33
+msgid "Yes"
+msgstr "Да"
+
+#: keypal/tgbot/keyboards.py:10 keypal/tgbot/keyboards.py:34
+msgid "No"
+msgstr "Нет"
+
+#: keypal/tgbot/keyboards.py:14
+msgid "Create account"
+msgstr "Создать учетную запись"
+
+#: keypal/tgbot/keyboards.py:18
+msgid "Log in"
+msgstr "Войти"
+
+#: keypal/tgbot/keyboards.py:22
+msgid "Start Session"
+msgstr "Начать сессию"
+
+#: keypal/tgbot/keyboards.py:26
+msgid "GET"
+msgstr "ПОЛУЧИТЬ"
+
+#: keypal/tgbot/keyboards.py:27
+msgid "SET"
+msgstr "УСТАНОВИТЬ"
+
+#: keypal/tgbot/keyboards.py:28
+msgid "UPDATE"
+msgstr "ОБНОВИТЬ"
+
+#: keypal/tgbot/keyboards.py:65 keypal/tgbot/keyboards.py:72
+msgid "Next"
+msgstr "След."
+
+#: keypal/tgbot/keyboards.py:68 keypal/tgbot/keyboards.py:71
+msgid "Prev"
+msgstr "Пред."
+

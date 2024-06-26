@@ -11,12 +11,26 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 
+
+import gettext
+from pathlib import Path
+
+_path = str(Path(__file__).parents[1])
+
+LOCALES = {
+    "ru_RU.UTF-8": gettext.translation("tgbot", _path, fallback=True),
+    "en_US.UTF-8": gettext.NullTranslations(),
+}
+
+locale = LOCALES["en_US.UTF-8"]
+
+
+def _(local, text):
+    """Redefine for choose locale."""
+    return local.gettext(text)
+
+
 from . import keyboards as kb
-
-
-locale = kb.locale
-_ = kb._
-LOCALES = kb.LOCALES
 
 
 urls = ["www.google.com",

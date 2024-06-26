@@ -3,51 +3,35 @@ from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
                            InlineKeyboardMarkup, InlineKeyboardButton)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-import gettext
-from pathlib import Path
-
-_path = str(Path(__file__).parents[1])
-
-LOCALES = {
-    "ru_RU.UTF-8": gettext.translation("tgbot", _path, fallback=True),
-    "en_US.UTF-8": gettext.NullTranslations(),
-}
-
-locale = LOCALES["en_US.UTF-8"]
-
-
-def _(local, text):
-    """Redefine for choose locale."""
-    return local.gettext(text)
-
+from . import handlers as hl
 
 start = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text=_(locale, "Yes"), callback_data="log_in"),
-     InlineKeyboardButton(text=_(locale, "No"), callback_data="registration")]
+    [InlineKeyboardButton(text=hl._(hl.locale, "Yes"), callback_data="log_in"),
+     InlineKeyboardButton(text=hl._(hl.locale, "No"), callback_data="registration")]
 ])
 
 reg_account = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text=_(locale, "Create account"), url="https://vault.bitwarden.com/#/register?layout=default")]
+    [InlineKeyboardButton(text=hl._(hl.locale, "Create account"), url="https://vault.bitwarden.com/#/register?layout=default")]
 ])
 
 log_in = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text=_(locale, "Log in"), callback_data="log_in")]
+    [InlineKeyboardButton(text=hl._(hl.locale, "Log in"), callback_data="log_in")]
 ])
 
 new_session = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text=_(locale, "Start Session"), callback_data="start_session")],
+    [InlineKeyboardButton(text=hl._(hl.locale, "Start Session"), callback_data="start_session")],
 ])
 
 main_menu = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text=_(locale, "GET"), callback_data="get_password")],
-    [InlineKeyboardButton(text=_(locale, "SET"), callback_data="set_password"),
-     InlineKeyboardButton(text=_(locale, "UPDATE"), callback_data="update_password")],
+    [InlineKeyboardButton(text=hl._(hl.locale, "GET"), callback_data="get_password")],
+    [InlineKeyboardButton(text=hl._(hl.locale, "SET"), callback_data="set_password"),
+     InlineKeyboardButton(text=hl._(hl.locale, "UPDATE"), callback_data="update_password")],
 ])
 
 
 update_exist_password = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text=_(locale, "Yes"), callback_data="update_exist_password_yes"),
-     InlineKeyboardButton(text=_(locale, "No"), callback_data="update_exist_password_no")]
+    [InlineKeyboardButton(text=hl._(hl.locale, "Yes"), callback_data="update_exist_password_yes"),
+     InlineKeyboardButton(text=hl._(hl.locale, "No"), callback_data="update_exist_password_no")]
 ])
 
 
@@ -78,13 +62,13 @@ async def buttons_list(buttons: list[str], column: int, type_bt: str):
 
     if len(buttons) > 5:
         if column == 0:
-            keyboard.add(InlineKeyboardButton(text=_(locale, "Next"), callback_data=f"next_{type_bt}"))
+            keyboard.add(InlineKeyboardButton(text=hl._(hl.locale, "Next"), callback_data=f"next_{type_bt}"))
             keyboard.adjust(1)
         elif (len(buttons) - 1) // 5 == column:
-            keyboard.add(InlineKeyboardButton(text=_(locale, "Prev"), callback_data=f"prev_{type_bt}"))
+            keyboard.add(InlineKeyboardButton(text=hl._(hl.locale, "Prev"), callback_data=f"prev_{type_bt}"))
             keyboard.adjust(1)
         else:
-            keyboard.row(InlineKeyboardButton(text=_(locale, "Prev"), callback_data=f"prev_{type_bt}"),
-                         InlineKeyboardButton(text=_(locale, "Next"), callback_data=f"next_{type_bt}"), width=2)
+            keyboard.row(InlineKeyboardButton(text=hl._(hl.locale, "Prev"), callback_data=f"prev_{type_bt}"),
+                         InlineKeyboardButton(text=hl._(hl.locale, "Next"), callback_data=f"next_{type_bt}"), width=2)
 
     return keyboard.as_markup()

@@ -1,2 +1,8 @@
-*.lock
+*~
+*.swp
 __pycache__
+*.lock
+build
+*.pot
+*.mo
+*.db
