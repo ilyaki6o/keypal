@@ -16,7 +16,7 @@ class TestBitwardenClient(unittest.TestCase):
     def test_1_list_items(self):
         data = self.client.list_items()
         id_set = {item['id'] for item in data}
-        self.assertTrue(id_set == {"cadfbea5-8a5c-4fe3-bc34-b19a00cec572", "7aeb48e7-57af-4a82-aec5-b19b007f1775"})
+        self.assertTrue(id_set == {"cadfbea5-8a5c-4fe3-bc34-b19a00cec572", "7aeb48e7-57af-4a82-aec5-b19b007f1775"} or id_set == {"7aeb48e7-57af-4a82-aec5-b19b007f1775", "cadfbea5-8a5c-4fe3-bc34-b19a00cec572"})
 
     def test_2_get_password_by_id(self):
         id = 'cadfbea5-8a5c-4fe3-bc34-b19a00cec572'
