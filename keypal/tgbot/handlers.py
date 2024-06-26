@@ -105,8 +105,6 @@ async def start(message: Message):
                                        client_id=data[0],
                                        client_secret=data[1])
 
-        await message.answer(f"bw status: {bw_client.get_status()}")
-
         match bw_client.get_status():
             case "unauthenticated":
                 try:
@@ -143,6 +141,12 @@ async def log_out(message: Message):
     global bw_client
     bw_client.logout()
     await start(message)
+
+
+@router.message(F.text, Command("get_status"))
+async def cur_status(message: Message):
+    global bw_client
+    await message.answer(f"cur status: {bw_client.get_status()}")
 
 ################# Callback
 
@@ -399,13 +403,22 @@ async def auth_check(message: Message, state: FSMContext):
 @router.message(MasterP.master_password)
 async def check_master_password(message: Message, state: FSMContext):
     """Catch message with master password and if its correct."""
+    global bw_client
     await state.update_data(master_password=message.text)
     data = await state.get_data()
 
-    await message.answer(f"Your master_password: {data['master_password']}")
+    # await message.answer(f"Your master_password: {data['master_password']}")
 
-    await state.clear()
-    await main_menu(message)
+    try:
+        bw_client.unlock(data['master_password'])
+    except Exception:
+        await message.answer(_(locale, "Incorrect master password. Try again."))
+        await state.clear()
+        await state.set_state(MasterP.master_password)
+        await message.answer(_(locale, "Please enter your master password"))
+    else:
+        await state.clear()
+        await main_menu(message)
 
 
 @router.message(Password_flow.url)
