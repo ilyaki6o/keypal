@@ -1,11 +1,16 @@
 import unittest
+import os
 from unittest.mock import patch, MagicMock
-from Bitwarden import BitwardenClient, LoginError, SessionError
+from bitwarden import BitwardenClient, LoginError, SessionError
 
 class TestBitwardenClient(unittest.TestCase):
-
     def setUp(self):
-        self.client = BitwardenClient(client_dir='/test/dir', client_id='test_id', client_secret='test_secret')
+        self.client = BitwardenClient("test_dir", "test_id", "test_secret")
+
+    def test_init(self):
+        self.assertEqual(self.client.client_id, "test_id")
+        self.assertEqual(self.client.client_secret, "test_secret")
+        self.assertFalse(self.client.unlocked)
 
     @patch('pexpect.spawn')
     def test_login(self, mock_spawn):
@@ -15,7 +20,8 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.client.login()
 
-        mock_spawn.assert_called_with("bw login --apikey", env=self.client.env_dict)
+        mock_spawn.assert_called_with("bw login --apikey",
+                                      env=os.environ | {'BITWARDENCLI_APPDATA_DIR': 'test_dir'})
         self.assertFalse(self.client.unlocked)
 
     @patch('pexpect.spawn')
@@ -35,7 +41,8 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.client.logout()
 
-        mock_spawn.assert_called_with("bw logout", env=self.client.env_dict)
+        mock_spawn.assert_called_with("bw logout",
+                                      env=os.environ | {'BITWARDENCLI_APPDATA_DIR': 'test_dir'})
         self.assertFalse(self.client.unlocked)
 
     @patch('pexpect.spawn')
@@ -59,7 +66,8 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.client.lock()
 
-        mock_spawn.assert_called_with("bw lock", env=self.client.env_dict)
+        mock_spawn.assert_called_with("bw lock",
+                                      env = os.environ | {'BITWARDENCLI_APPDATA_DIR': 'test_dir'})
         self.assertFalse(self.client.unlocked)
 
     @patch('pexpect.spawn')
@@ -76,7 +84,6 @@ class TestBitwardenClient(unittest.TestCase):
 
     def test_list_items_locked(self):
         self.client.unlocked = False
-
         with self.assertRaises(SessionError):
             self.client.list_items()
 
@@ -98,20 +105,17 @@ class TestBitwardenClient(unittest.TestCase):
         mock_child = MagicMock()
         mock_spawn.return_value = mock_child
         mock_child.read.return_value = b'{"status": "unlocked"}'
-
         status = self.client.get_status()
-
-        self.assertEqual(status, 'unlocked')
+        self.assertEqual(status, "unlocked")
 
     @patch('pexpect.spawn')
     def test_sync(self, mock_spawn):
         mock_child = MagicMock()
         mock_spawn.return_value = mock_child
         mock_child.exitstatus = 0
-
         self.client.sync()
-
-        mock_spawn.assert_called_with("bw sync", env=self.client.env_dict)
+        mock_spawn.assert_called_with("bw sync",
+                                      env=os.environ | {'BITWARDENCLI_APPDATA_DIR': 'test_dir'})
         self.assertTrue(self.client.spoiled_data)
 
     def test_get_password_by_id(self):
@@ -126,8 +130,6 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.assertEqual(result, ('user1', 'pass1'))
 
-
-
     @patch('pexpect.spawn')
     def test_generate_passphrase(self, mock_spawn):
         mock_child = MagicMock()
@@ -137,7 +139,6 @@ class TestBitwardenClient(unittest.TestCase):
         passphrase = self.client.generate_passphrase()
 
         self.assertEqual(passphrase, 'generated-pass-phrase')
-
 
 
 if __name__ == '__main__':

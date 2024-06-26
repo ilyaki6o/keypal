@@ -2,9 +2,7 @@ import sqlite3
 
 
 class Database:
-    """
-    A class to manage Bitwarden API keys in a SQLite database.
-    """
+    """A class to manage Bitwarden API keys in a SQLite database."""
 
     def __init__(self, id):
         """
@@ -79,10 +77,10 @@ class Database:
         :return: A list containing all records from the APIKEYS table.
         :rtype: list of tuples
         """
-        query6="""SELECT * FROM APIKEYS"""
+        query6 = """SELECT * FROM APIKEYS"""
         self.cursor.execute(query6)
         records = self.cursor.fetchall()
-        answer=[]
+        answer = []
         for record in records:
             answer.append(record)
         return answer
@@ -90,6 +88,3 @@ class Database:
     def close(self):
         """Close the database connection."""
         self.db.close()
-
-
-
