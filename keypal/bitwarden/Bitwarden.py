@@ -235,7 +235,8 @@ class BitwardenClient:
 
     def generate_password(self):
         """Generate password with length of 14 symbols containing letters and digits."""
-        child = pexpect.spawn("bw generate")
+        child = pexpect.spawn("bw generate",
+                              env=self.env_dict | {"BW_SESSION": self.session_key})
         password = child.read()
         child.expect(pexpect.EOF)
         child.close()
@@ -252,13 +253,13 @@ class BitwardenClient:
 
 if __name__ == "__main__":
     bw1 = BitwardenClient('Igor')
-    bw2 = BitwardenClient('Roma')
+    #bw2 = BitwardenClient('Roma')
     bw1.login("user.63b0f8d5-c939-4fe9-94ef-b18300c96a51", "CsQTsbVedEMzR2v9Ji8bFLikgHbo9Y")
-    bw2.login("user.65ba2bf2-52e7-461f-8a60-b199007a8fcd", "4dhEts3hBIsCDVYm5WwGklJ8N7cGZ5")
+    #bw2.login("user.65ba2bf2-52e7-461f-8a60-b199007a8fcd", "4dhEts3hBIsCDVYm5WwGklJ8N7cGZ5")
     bw1.unlock("CROSBY878697")
-    bw2.unlock("passwordforbitwarden")
-    print(bw1.list_items())
-    bw2.create_password("google.com", "roma", "aaaaaaa")
-    print(bw2.list_items())
+    #bw2.unlock("passwordforbitwarden")
+    print(bw1.get_status())
+    #bw2.create_password("google.com", "roma", "aaaaaaa")
+    #print(bw2.list_items())
     bw1.logout()
-    bw2.logout()
+    #bw2.logout()
