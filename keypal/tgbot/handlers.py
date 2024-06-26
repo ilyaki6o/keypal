@@ -11,7 +11,6 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 
-
 import gettext
 from pathlib import Path
 
@@ -31,6 +30,8 @@ def _(local, text):
 
 
 from . import keyboards as kb
+from ..database import database as db
+from ..bitwarden import bitwarden as bw
 
 
 urls = ["www.google.com",
@@ -49,12 +50,13 @@ urls = ["www.google.com",
 meneger = {"www.google.com": {"ilya": "askdjlashj2123"}}
 
 router = Router()
-bw = ''
 url_column = 0
 login_column = 0
 chosen_urls = []
 chosen_logins = []
 
+auth_db = None
+bw_client = None
 
 class User(StatesGroup):
     """State sequence for user authorization."""
@@ -92,13 +94,55 @@ class Set_Password(StatesGroup):
 @router.message(CommandStart())
 async def start(message: Message):
     """/start command handler."""
-    await message.answer(_(locale, "Hello, its KeyPal - telegram bot wrapper for Bitwarden password manager."))
-    await message.answer(_(locale, "Do you already have a Bitwarden account?"), reply_markup=kb.start)
+    global auth_db 
+    global bw_client
+    auth_db = db.Database(message.from_user.id)
+
+    if (data := auth_db.check()):
+
+
+        bw_client = bw.BitwardenClient(client_dir=str(message.from_user.id),
+                                       client_id=data[0],
+                                       client_secret=data[1])
+
+        await message.answer(f"bw status: {bw_client.get_status()}")
+
+        match bw_client.get_status():
+            case "unauthenticated":
+                try:
+                    bw_client.login(client_id=data[0],
+                                    client_secret=data[1])
+                except Exception:
+                    print("Incorrect data in db")
+                    exit(1)
+
+                await start_session(message)
+            case "locked":
+                await start_session(message)
+            case "unlocked":
+                await main_menu(message)
+    else:
+        await message.answer(_(locale, "Hello, its KeyPal - telegram bot wrapper for Bitwarden password manager."))
+        await message.answer(_(locale, "Do you already have a Bitwarden account?"), reply_markup=kb.start)
 
 
 @router.message(F.text, Command("translate"))
 async def translate(message: Message):
     await message.answer(_(locale, "Please choose locale"), reply_markup=kb.translate)
+
+
+@router.message(F.text, Command("close_session"))
+async def close_session(message: Message):
+    global bw_client
+    bw_client.lock()
+    await start_session(message)
+
+
+@router.message(F.text, Command("log_out"))
+async def log_out(message: Message):
+    global bw_client
+    bw_client.logout()
+    await start(message)
 
 ################# Callback
 
@@ -330,16 +374,26 @@ async def auth_check(message: Message, state: FSMContext):
     await state.update_data(client_secret=message.text)
     data = await state.get_data()
 
+    global bw_client
+    global auth_db
+    bw_client = bw.BitwardenClient(client_dir=str(message.from_user.id),
+                                   client_id=data['client_id'],
+                                   client_secret=data["client_secret"]) 
     await message.answer(f"Your client_id: {data['client_id']}\nYour client_secret: {data['client_secret']}")
-    # try:
-    #     bw = bitwd.BITWARDEN(data["client_id"], data["client_secret"])
-    # except pex_exc.EOF:
-    #     message.answer("Login or client_secret is wrong. Please try log in again.")
-    #     await request_client_id(message, state)
-    # else:
 
-    await state.clear()
-    await start_session(message)
+    try:
+        bw_client.login(client_id=data["client_id"],
+                        client_secret=data["client_secret"])
+    except Exception:
+        await message.answer(_(locale, "Cannot connect to your account. client_id or client_secret is not correct"))
+        await state.clear()
+        await request_client_id(message, state)
+    else:
+        auth_db.add_new(client_id=data["client_id"],
+                        client_secret=data["client_secret"])
+
+        await state.clear()
+        await start_session(message)
 
 
 @router.message(MasterP.master_password)
