@@ -11,9 +11,9 @@ pexpect = "*"
 [dev-packages]
 pydocstyle = "*"
 flake8 = "*"
+pybabel = "*"
 doit = "*"
 build = "*"
-babel = "*"
 sphinx = "*"
 
 [requires]

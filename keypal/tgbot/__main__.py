@@ -3,7 +3,7 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-from .handlers import router
+from . import handlers as hl
 
 TOKEN = "7342917304:AAG0OneBgGCglwp07pD3TXw5tNPwMCf1E2o"
 
@@ -13,7 +13,7 @@ dp = Dispatcher()
 
 async def main():
     """Include routert and start bot."""
-    dp.include_router(router)
+    dp.include_router(hl.router)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

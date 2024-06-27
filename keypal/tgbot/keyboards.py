@@ -3,6 +3,7 @@ from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
                            InlineKeyboardMarkup, InlineKeyboardButton)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+
 start = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Yes", callback_data="log_in"),
      InlineKeyboardButton(text="No", callback_data="registration")]
@@ -23,13 +24,25 @@ new_session = InlineKeyboardMarkup(inline_keyboard=[
 main_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="GET", callback_data="get_password")],
     [InlineKeyboardButton(text="SET", callback_data="set_password"),
-     InlineKeyboardButton(text="UPDATE", callback_data="update_password")],
+     InlineKeyboardButton(text="DELETE", callback_data="delete_password")],
 ])
 
 
 update_exist_password = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="YES", callback_data="update_exist_password_yes"),
-     InlineKeyboardButton(text="NO", callback_data="update_exist_password_no")]
+    [InlineKeyboardButton(text="Yes", callback_data="update_exist_password_yes"),
+     InlineKeyboardButton(text="No", callback_data="update_exist_password_no")]
+])
+
+
+translate = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="RU", callback_data="translate_ru"),
+     InlineKeyboardButton(text="EN", callback_data="translate_en")]
+])
+
+
+delete_password = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="Yes", callback_data="delete_password_yes"),
+     InlineKeyboardButton(text="No", callback_data="delete_password_no")]
 ])
 
 
