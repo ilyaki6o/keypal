@@ -1,3 +1,4 @@
+"""Main logic for database interactions."""
 import sqlite3
 
 

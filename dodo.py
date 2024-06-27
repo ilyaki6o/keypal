@@ -23,7 +23,7 @@ def clean_build():
 
 
 def task_test_mock():
-    """Run tests with mock"""
+    """Run tests with mock."""
     return {
         'actions': [
             'python3 ./keypal/bitwarden/test_bitwarden_mocker.py',
@@ -32,7 +32,7 @@ def task_test_mock():
 
 
 def task_test_client():
-    """Run tests for client"""
+    """Run tests for client."""
     return {
         'actions': [
             'python3 ./keypal/bitwarden/test_bitwarden_client.py',
@@ -41,10 +41,10 @@ def task_test_client():
 
 
 def task_erase():
-    """Delete all git untracked files (better to use then clean_targets)"""
+    """Delete all git untracked files (better to use then clean_targets)."""
     return {
             'actions': ['git clean -xdf'],
-            }
+           }
 
 
 '''def task_pot():
