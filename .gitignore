@@ -6,5 +6,5 @@ build/
 *.db
 *.mo
 *.pot
-sdist/
+dist/
 *.egg-info
