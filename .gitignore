@@ -1,8 +1,8 @@
 *~
 *.swp
-__pycache__
 *.lock
-build
-*.pot
-*.mo
+__pycache__/
+build/
 *.db
+*.mo
+*.pot
