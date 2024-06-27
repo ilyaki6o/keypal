@@ -3,6 +3,7 @@ import os
 from unittest.mock import patch, MagicMock
 from bitwarden import BitwardenClient, LoginError, SessionError
 
+
 class TestBitwardenClient(unittest.TestCase):
     def setUp(self):
         self.client = BitwardenClient("test_dir", "test_id", "test_secret")
@@ -67,7 +68,7 @@ class TestBitwardenClient(unittest.TestCase):
         self.client.lock()
 
         mock_spawn.assert_called_with("bw lock",
-                                      env = os.environ | {'BITWARDENCLI_APPDATA_DIR': 'test_dir'})
+                                      env=os.environ | {'BITWARDENCLI_APPDATA_DIR': 'test_dir'})
         self.assertFalse(self.client.unlocked)
 
     @patch('pexpect.spawn')
@@ -101,14 +102,6 @@ class TestBitwardenClient(unittest.TestCase):
         self.assertEqual(results[0]['login']['uris'][0]['uri'], 'https://example.com')
 
     @patch('pexpect.spawn')
-    def test_get_status(self, mock_spawn):
-        mock_child = MagicMock()
-        mock_spawn.return_value = mock_child
-        mock_child.read.return_value = b'{"status": "unlocked"}'
-        status = self.client.get_status()
-        self.assertEqual(status, "unlocked")
-
-    @patch('pexpect.spawn')
     def test_sync(self, mock_spawn):
         mock_child = MagicMock()
         mock_spawn.return_value = mock_child
@@ -117,21 +110,6 @@ class TestBitwardenClient(unittest.TestCase):
         mock_spawn.assert_called_with("bw sync",
                                       env=os.environ | {'BITWARDENCLI_APPDATA_DIR': 'test_dir'})
         self.assertTrue(self.client.spoiled_data)
-
-    def test_get_password_by_id(self):
-        self.client.unlocked = True
-        self.client.password_data = [
-            {'id': '1', 'login': {'username': 'user1', 'password': 'pass1'}},
-            {'id': '2', 'login': {'username': 'user2', 'password': 'pass2'}}
-        ]
-        self.client.spoiled_data = False
-
-        result = self.client.get_password_by_id('1')
-
-        self.assertEqual(result, ('user1', 'pass1'))
-
-
-    
 
     @patch('pexpect.spawn')
     def test_generate_password(self, mock_spawn):
@@ -145,16 +123,6 @@ class TestBitwardenClient(unittest.TestCase):
         self.assertEqual(password, 'generated_password')
 
     @patch('pexpect.spawn')
-    def test_generate_passphrase(self, mock_spawn):
-        mock_child = MagicMock()
-        mock_child.read.return_value = b'word1-word2-word3'
-        mock_spawn.return_value = mock_child
-
-        passphrase = self.client.generate_passphrase()
-
-        self.assertEqual(passphrase, 'word1-word2-word3')
-
-    @patch('pexpect.spawn')
     def test_get_password_by_id(self, mock_spawn):
         self.client.unlocked = True
         self.client.session_key = 'test_session_key'
@@ -166,8 +134,6 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.assertEqual(username, 'testuser')
         self.assertEqual(password, 'testpass')
-
-    
 
     @patch('pexpect.spawn')
     def test_get_status(self, mock_spawn):
@@ -191,17 +157,6 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.assertEqual(result, ())
 
-    @patch('pexpect.spawn')
-    def test_del_password_by_id_failure(self, mock_spawn):
-        self.client.unlocked = True
-        self.client.session_key = 'test_session_key'
-        mock_child = MagicMock()
-        mock_child.exitstatus = 1
-        mock_spawn.return_value = mock_child
-
-        with self.assertRaises(Exception):
-            self.client.del_password_by_id('nonexistent_id')
-
     def test_search_items_with_uri_part_no_match(self):
         self.client.unlocked = True
         self.client.password_data = [
@@ -213,8 +168,6 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.assertEqual(len(items), 0)
 
-
-   
     @patch('pexpect.spawn')
     def test_generate_passphrase(self, mock_spawn):
         mock_child = MagicMock()
@@ -228,7 +181,6 @@ class TestBitwardenClient(unittest.TestCase):
     def test_check_exitstatus(self):
         with self.assertRaises(LoginError):
             self.client.check_exitstatus(1, LoginError, "Test error message")
-        
         try:
             self.client.check_exitstatus(0, LoginError, "Test error message")
         except LoginError:
@@ -258,7 +210,6 @@ class TestBitwardenClient(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]['name'], 'Cached Item')
         mock_spawn.assert_not_called()
-
 
     def test_search_items_with_uri_part_multiple_matches(self):
         self.client.unlocked = True
@@ -297,7 +248,6 @@ class TestBitwardenClient(unittest.TestCase):
         self.assertEqual(status, 'unlocked')
         mock_spawn.assert_called_with("bw status", env=self.client.env_dict | {"BW_SESSION": self.client.session_key})
 
-
     @patch('pexpect.spawn')
     def test_generate_password_with_options(self, mock_spawn):
         mock_child = MagicMock()
@@ -322,13 +272,10 @@ class TestBitwardenClient(unittest.TestCase):
         mock_spawn.assert_called_with("bw generate --passphrase")
         self.assertEqual(passphrase, 'word1-word2-word3')
 
-   
-
     @patch('pexpect.spawn')
     def test_del_password_by_id_failure(self, mock_spawn):
         self.client.unlocked = True
         self.client.session_key = 'test_session_key'
-        
         mock_child = MagicMock()
         mock_child.exitstatus = 1
         mock_spawn.return_value = mock_child
@@ -344,8 +291,6 @@ class TestBitwardenClient(unittest.TestCase):
             self.client.check_exitstatus(1, Exception, "Test message")
         self.assertEqual(str(context.exception), "Test message")
 
-  
-
     @patch('pexpect.spawn')
     def test_unlock_incorrect_password(self, mock_spawn):
         mock_child = MagicMock()
@@ -357,7 +302,6 @@ class TestBitwardenClient(unittest.TestCase):
 
         self.assertFalse(self.client.unlocked)
 
-   
     @patch('pexpect.spawn')
     def test_sync_updates_spoiled_data(self, mock_spawn):
         mock_child = MagicMock()
@@ -368,7 +312,6 @@ class TestBitwardenClient(unittest.TestCase):
         self.client.sync()
 
         self.assertTrue(self.client.spoiled_data)
-
 
     @patch('pexpect.spawn')
     def test_generate_password_length(self, mock_spawn):
@@ -402,7 +345,6 @@ class TestBitwardenClient(unittest.TestCase):
         result = self.client.get_password_by_id('abc123')
 
         self.assertEqual(result, ())
-
 
     @patch('pexpect.spawn')
     def test_login_with_empty_credentials(self, mock_spawn):
@@ -439,8 +381,6 @@ class TestBitwardenClient(unittest.TestCase):
     def test_unlock_with_empty_password(self, mock_spawn):
         with self.assertRaises(LoginError):
             self.client.unlock('')
-
-
 
 
 if __name__ == '__main__':
