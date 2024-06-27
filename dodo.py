@@ -1,18 +1,16 @@
-"""Doit autogeneration."""
+"""Automatization with doit."""
 
-
-import glob 
+import glob
+import os
 from doit.task import clean_targets
 from shutil import rmtree
-import os
-
 
 
 def task_html():
     """Create docs html."""
     return {
         'actions': ['sphinx-build -M html ./docs/source ./keypal/docs/build'],
-        'file_dep': glob.glob("./docs/source/*.rst"),
+        'file_dep': glob.glob("./docs/source/*.rst") + glob.glob('keypal/*/*.py'),
         'targets': ['./keypal/docs/build'],
         'clean': [clean_build, clean_targets],
     }
@@ -28,7 +26,7 @@ def task_test_mock():
     """Run tests with mock"""
     return {
         'actions': [
-            'python3  ./keypal/bitwarden/test_bitwarden_mocker.py',
+            'python3 ./keypal/bitwarden/test_bitwarden_mocker.py',
         ],
     }
 
@@ -37,9 +35,17 @@ def task_test_client():
     """Run tests for client"""
     return {
         'actions': [
-            'python3  ./keypal/bitwarden/test_bitwarden_client.py',
+            'python3 ./keypal/bitwarden/test_bitwarden_client.py',
         ],
     }
+
+
+def task_erase():
+    """Delete all git untracked files (better to use then clean_targets)"""
+    return {
+            'actions': ['git clean -xdf'],
+            }
+
 
 '''def task_pot():
     """Re-create .pot."""
