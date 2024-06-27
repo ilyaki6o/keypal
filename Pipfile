@@ -15,6 +15,7 @@ pybabel = "*"
 doit = "*"
 build = "*"
 sphinx = "*"
+setuptools = "*"
 
 [requires]
 python_version = "3.12"
