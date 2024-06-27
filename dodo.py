@@ -89,12 +89,6 @@ def task_i18n():
             }
 
 
-def task_erase():
-    return {
-            'actions': ['git clean -xdf'],
-            'doc': 'task for cleaning uncommited files',
-            }
-
 
 def task_sdist():
     return {
