@@ -21,8 +21,6 @@ LOCALES = {
     "en_US.UTF-8": gettext.NullTranslations(),
 }
 
-locale = LOCALES["en_US.UTF-8"]
-
 
 def _(local, text):
     """Redefine for choose locale."""
@@ -33,30 +31,31 @@ from . import keyboards as kb
 from ..database import database as db
 from ..bitwarden import bitwarden as bw
 
-
-urls = ["www.google.com",
-        "calendar.google.com",
-        "music.google.com",
-        "tasks.google.com",
-        "youtube.google.com",
-        "news.google.com",
-        "market.google.com",
-        "adskjdsa.google.com",
-        "jhadsskj.google.com",
-        "fdsakjdas.google.com",
-        "akjoiqwio.google.com",
-        ]
-
-meneger = {"www.google.com": {"ilya": "askdjlashj2123"}}
-
 router = Router()
-url_column = 0
-login_column = 0
-chosen_urls = []
-chosen_logins = []
 
-auth_db = None
-bw_client = None
+clients = {}
+
+
+class Client():
+    url_column = 0
+    login_column = 0
+    chosen_urls = []
+    chosen_logins = []
+    auth_db = None
+    bw_client = None
+    locale = LOCALES["en_US.UTF-8"]
+
+    def set_db(self, db):
+        self.auth_db = db
+    
+    def get_db(self):
+        return self.auth_db
+    
+    def set_bw(self, bw):
+        self.bw_client = bw
+
+    def get_bw(self):
+        return self.bw_client
 
 class User(StatesGroup):
     """State sequence for user authorization."""
@@ -94,16 +93,20 @@ class Set_Password(StatesGroup):
 @router.message(CommandStart())
 async def start(message: Message):
     """/start command handler."""
-    global auth_db 
-    global bw_client
-    auth_db = db.Database(message.from_user.id)
+    clients[message.chat.id] = Client()
+    auth_db = db.Database(message.chat.id)
+    clients[message.chat.id].set_db(auth_db)
+    locale = clients[message.chat.id].locale
+
+    # await message.answer(str(message.chat.id))
+
 
     if (data := auth_db.check()):
-
-
-        bw_client = bw.BitwardenClient(client_dir=str(message.from_user.id),
+        bw_client = bw.BitwardenClient(client_dir=str(message.chat.id),
                                        client_id=data[0],
                                        client_secret=data[1])
+
+        clients[message.chat.id].set_bw(bw_client)
 
         match bw_client.get_status():
             case "unauthenticated":
@@ -126,26 +129,27 @@ async def start(message: Message):
 
 @router.message(F.text, Command("translate"))
 async def translate(message: Message):
+    locale = clients[message.chat.id].locale
     await message.answer(_(locale, "Please choose locale"), reply_markup=kb.translate)
 
 
 @router.message(F.text, Command("close_session"))
 async def close_session(message: Message):
-    global bw_client
+    bw_client = clients[message.chat.id].get_bw()
     bw_client.lock()
     await start_session(message)
 
 
 @router.message(F.text, Command("log_out"))
 async def log_out(message: Message):
-    global bw_client
+    bw_client = clients[message.chat.id].get_bw()
     bw_client.logout()
     await start(message)
 
 
 @router.message(F.text, Command("get_status"))
 async def cur_status(message: Message):
-    global bw_client
+    bw_client = clients[message.chat.id].get_bw()
     await message.answer(f"cur status: {bw_client.get_status()}")
 
 ################# Callback
@@ -153,14 +157,13 @@ async def cur_status(message: Message):
 
 @router.callback_query(F.data.startswith("translate_"))
 async def choose_locale(call: CallbackQuery):
-    global locale
     language = str(call.data)[-2:]
 
     match language:
         case "en":
-            locale = LOCALES["en_US.UTF-8"]
+            clients[call.message.chat.id].locale = LOCALES["en_US.UTF-8"]
         case "ru":
-            locale = LOCALES["ru_RU.UTF-8"]
+            clients[call.message.chat.id].locale= LOCALES["ru_RU.UTF-8"]
 
     await call.answer("")
 
@@ -185,6 +188,8 @@ async def registration(call: CallbackQuery):
 
     Offers to create an account and log in.
     """
+    locale = clients[call.message.chat.id].locale
+
     await call.message.answer(_(locale, "Let's set you up with a Bitwarden account.\n") +
                               _(locale, "To register an account on the Bitwarden website click on the button below."),
                               reply_markup=kb.reg_account)
@@ -200,6 +205,7 @@ async def master_password(call: CallbackQuery, state: FSMContext):
 
     Check client master password.
     """
+    locale = clients[call.message.chat.id].locale
     await state.set_state(MasterP.master_password)
     await call.message.answer(_(locale, "Please enter your master password"))
     await call.answer('')
@@ -212,6 +218,7 @@ async def get_password(call: CallbackQuery, state: FSMContext):
 
     Requests the address of the website where you need to enter your password.
     """
+    locale = clients[call.message.chat.id].locale
     await call.message.answer(_(locale, "Enter the url to search for the password"))
     await state.set_state(Password_flow.url)
     await state.update_data(work_type=str(call.data))
@@ -225,6 +232,7 @@ async def delete_password(call: CallbackQuery, state: FSMContext):
 
     Requests the address of the website where you need to delete your password.
     """
+    locale = clients[call.message.chat.id].locale
     await call.message.answer(_(locale, "Enter the url to search for the password"))
     await state.set_state(Password_flow.url)
     await state.update_data(work_type=str(call.data))
@@ -238,6 +246,8 @@ async def set_password(call: CallbackQuery, state: FSMContext):
 
     Requests the address of the website where you want to create new account.
     """
+    locale = clients[call.message.chat.id].locale
+
     await call.message.answer(_(locale, "Enter the address of the site for which you want to save the password"))
     await state.set_state(Set_Password.url)
     await call.answer("")
@@ -279,17 +289,20 @@ async def next_column(call: CallbackQuery):
 
     Generate next page of buttons (url or login).
     """
-    global chosen_urls, url_column, chosen_logins, login_column
-
+    locale = clients[call.message.chat.id].locale
     state = str(call.data)[5:]
 
     match state:
         case "url":
-            url_column += 1
+            clients[call.message.chat.id].url_column += 1
+            url_column = client[call.message.chat.id].url_column
+            chosen_urls = client[call.message.chat.id].chosen_urls
             await call.message.edit_text(_(locale, "Please select website"),
                                          reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
         case "login":
-            login_column += 1
+            clients[call.message.chat.id].login_column += 1
+            chosen_logins = clients[call.message.chat.id].chosen_logins
+            login_column = clients[call.message.chat.id].login_column
             await call.message.edit_text(_(locale, "Please select login"),
                                          reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
@@ -303,43 +316,46 @@ async def prev_column(call: CallbackQuery):
 
     Generate previous page of buttons (url or login).
     """
-    global chosen_urls, url_column, chosen_logins, login_column
-
+    locale = clients[call.message.chat.id].locale
     state = str(call.data)[5:]
 
     match state:
         case "url":
-            url_column -= 1
+            clients[call.message.chat.id].url_column -= 1
+            url_column = client[call.message.chat.id].url_column
+            chosen_urls = client[call.message.chat.id].chosen_urls
             await call.message.edit_text(_(locale, "Please select website"),
                                          reply_markup=await kb.buttons_list(chosen_urls, url_column, "url"))
         case "login":
-            login_column -= 1
+            clients[call.message.chat.id].login_column -= 1
+            chosen_logins = clients[call.message.chat.id].chosen_logins
+            login_column = clients[call.message.chat.id].login_column
             await call.message.edit_text(_(locale, "Please select login"),
                                          reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
     await call.answer("")
 
 
-@router.callback_query(F.data.startswith("update_exist_password_"))
-async def chenge_exist_password(call: CallbackQuery, state: FSMContext):
-    """
-    "Yes" and 'No' button hendler for keyboard while set new password.
-
-    With 'Yes' request new password.
-    With 'No' stop set password process and display main menu.
-    """
-    type_bt = str(call.data)[-3:]
-
-    match type_bt:
-        case "yes":
-            await call.message.answer(_(locale, "Please enter new password"))
-            await state.set_state(Set_Password.password)
-        case "_no":
-            await call.message.edit_text(_(locale, "Adding a password is canceled"))
-            await state.clear()
-            await main_menu(call.message)
-
-    await call.answer("")
+# @router.callback_query(F.data.startswith("update_exist_password_"))
+# async def chenge_exist_password(call: CallbackQuery, state: FSMContext):
+#     """
+#     "Yes" and 'No' button hendler for keyboard while set new password.
+#
+#     With 'Yes' request new password.
+#     With 'No' stop set password process and display main menu.
+#     """
+#     type_bt = str(call.data)[-3:]
+#
+#     match type_bt:
+#         case "yes":
+#             await call.message.answer(_(locale, "Please enter new password"))
+#             await state.set_state(Set_Password.password)
+#         case "_no":
+#             await call.message.edit_text(_(locale, "Adding a password is canceled"))
+#             await state.clear()
+#             await main_menu(call.message)
+#
+#     await call.answer("")
 
 
 @router.callback_query(F.data.startswith("delete_password_"))
@@ -350,7 +366,8 @@ async def delete_password_callback(call: CallbackQuery, state: FSMContext):
     With 'Yes' delete password and display main menu.
     With 'No' stop  process and display main menu.
     """
-    global bw_client
+    locale = clients[call.message.chat.id].locale
+    bw_client = clients[call.message.chat.id].get_bw()
     type_bt = str(call.data)[-3:]
 
 
@@ -377,17 +394,20 @@ async def delete_password_callback(call: CallbackQuery, state: FSMContext):
 
 async def start_session(message: Message):
     """Display 'start session' button."""
+    locale = clients[message.chat.id].locale
     await message.answer(_(locale, "Click the button below to start new session"), reply_markup=kb.new_session)
 
 
 async def request_client_id(message: Message, state: FSMContext):
     """Request client_id."""
+    locale = clients[message.chat.id].locale
     await state.set_state(User.client_id)
     await message.answer(_(locale, "Please enter your client_id"))
 
 
 async def main_menu(message: Message):
     """Display main menu."""
+    locale = clients[message.chat.id].locale
     await message.answer(_(locale, "Welcome to KeyPal"), reply_markup=kb.main_menu)
 
 
@@ -397,6 +417,7 @@ async def main_menu(message: Message):
 @router.message(User.client_id)
 async def request_client_secret(message: Message, state: FSMContext):
     """Catch message with client_id and request client_secret."""
+    locale = clients[message.chat.id].locale
     await state.update_data(client_id=message.text)
     await state.set_state(User.client_secret)
     await message.answer(_(locale, "Please enter your client_secret"))
@@ -405,15 +426,16 @@ async def request_client_secret(message: Message, state: FSMContext):
 @router.message(User.client_secret)
 async def auth_check(message: Message, state: FSMContext):
     """Catch message with client_secret and make authorization check."""
+    locale = clients[message.chat.id].locale
     await state.update_data(client_secret=message.text)
     data = await state.get_data()
 
-    global bw_client
-    global auth_db
-    bw_client = bw.BitwardenClient(client_dir=str(message.from_user.id),
+    bw_client = bw.BitwardenClient(client_dir=str(message.chat.id),
                                    client_id=data['client_id'],
                                    client_secret=data["client_secret"]) 
-    await message.answer(f"Your client_id: {data['client_id']}\nYour client_secret: {data['client_secret']}")
+    # await message.answer(f"Your client_id: {data['client_id']}\nYour client_secret: {data['client_secret']}")
+
+    clients[message.chat.id].set_bw(bw_client)
 
     try:
         bw_client.login(client_id=data["client_id"],
@@ -423,6 +445,7 @@ async def auth_check(message: Message, state: FSMContext):
         await state.clear()
         await request_client_id(message, state)
     else:
+        auth_db = clients[message.chat.id].get_db()
         auth_db.add_new(client_id=data["client_id"],
                         client_secret=data["client_secret"])
 
@@ -433,9 +456,10 @@ async def auth_check(message: Message, state: FSMContext):
 @router.message(MasterP.master_password)
 async def check_master_password(message: Message, state: FSMContext):
     """Catch message with master password and if its correct."""
-    global bw_client
+    locale = clients[message.chat.id].locale
     await state.update_data(master_password=message.text)
     data = await state.get_data()
+    bw_client = clients[message.chat.id].get_bw()
 
     # await message.answer(f"Your master_password: {data['master_password']}")
 
@@ -459,7 +483,8 @@ async def choose_url(message: Message, state: FSMContext):
     Check if url with this substring exist and displey keyboard with appropriate urls.
     Request to choose url.
     """
-    global url_column, chosen_urls, bw_client
+    locale = clients[message.chat.id].locale
+    bw_client = clients[message.chat.id].get_bw()
 
     url = message.text
     cur_urls= bw_client.search_items_with_uri_part(url)
@@ -473,6 +498,9 @@ async def choose_url(message: Message, state: FSMContext):
 
     chosen_urls = list(set(chosen_urls))
     chosen_urls = sorted(chosen_urls)
+
+    clients[message.chat.id].chosen_urls = chosen_urls
+    clients[message.chat.id].url_column = url_column
 
     # await message.answer(str(chosen_urls))
 
@@ -492,7 +520,8 @@ async def choose_url(message: Message, state: FSMContext):
 
 async def choose_login(message: Message, state: FSMContext):
     """Displey account logins on selected site and request to choose login."""
-    global login_column, chosen_logins, bw_client
+    locale = clients[message.chat.id].locale
+    bw_client = clients[message.chat.id].get_bw()
 
     chosen_logins, login_column = [], 0
     data = await state.get_data()
@@ -503,13 +532,16 @@ async def choose_login(message: Message, state: FSMContext):
         chosen_logins.append(el["login"]["username"])
 
     chosen_logins = sorted(chosen_logins)
+    clients[message.chat.id].chosen_logins = chosen_logins
+    clients[message.chat.id].login_column = login_column
+
     await message.answer(_(locale, "Please select login"),
                          reply_markup=await kb.buttons_list(chosen_logins, login_column, "login"))
 
 
 async def check_work_type(message: Message, state: FSMContext):
     """Determine whether it's a 'GET' or 'UPDATE' process."""
-    global bw_client
+    bw_client = clients[message.chat.id].get_bw()
     password = ""
 
     data = await state.get_data()
@@ -529,6 +561,7 @@ async def check_work_type(message: Message, state: FSMContext):
 
 async def send_password(message: Message, state: FSMContext):
     """Displat login and password for selected website."""
+    locale = clients[message.chat.id].locale
     data = await state.get_data()
 
     res = _(locale, "For website: {}\n\nLogin: <code>{}</code>\nPassword: <code>{}</code>").format(data["url"],
@@ -543,6 +576,7 @@ async def send_password(message: Message, state: FSMContext):
 
 async def delete_password_query(message: Message, state: FSMContext):
     """Delete password from bitwaeden."""
+    locale = clients[message.chat.id].locale
     data = await state.get_data()
 
     res = _(locale, "For website: {}\n\nLogin: <code>{}</code>\nPassword: <code>{}</code>").format(data["url"],
@@ -550,13 +584,14 @@ async def delete_password_query(message: Message, state: FSMContext):
                                                                                         data["password"])
 
     await message.answer(res, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-    await message.answer("Are you sure you want to delete the password", reply_markup=kb.delete_password)
+    await message.answer(_(locale, "Are you sure you want to delete the password"), reply_markup=kb.delete_password)
 
 
 @router.message(Set_Password.password)
 async def set_new_password(message: Message, state: FSMContext):
     """Catch password for new account and save in in memmory."""
-    global bw_client
+    locale = clients[message.chat.id].locale
+    bw_client = clients[message.chat.id].get_bw()
 
     await state.update_data(password=message.text)
     data = await state.get_data()
@@ -571,6 +606,7 @@ async def set_new_password(message: Message, state: FSMContext):
 @router.message(Set_Password.url)
 async def url_for_set(message: Message, state: FSMContext):
     """Catch url string, save it and request login for new account."""
+    locale = clients[message.chat.id].locale
     url = str(message.text)
 
     if validators.url(url):
@@ -591,7 +627,8 @@ async def login_for_set(message: Message, state: FSMContext):
     If pare <url, login> already exist then request to update password for pare.
     Else request password for new account.
     """
-    global bw_client
+    locale = clients[message.chat.id].locale
+    bw_client = clients[message.chat.id].get_bw()
     login = str(message.text)
     await state.update_data(login=login)
     data = await state.get_data()
