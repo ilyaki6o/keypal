@@ -40,6 +40,15 @@ def task_test_client():
     }
 
 
+def task_test_codestyle():
+    return {
+        'actions': [
+            'flake8',
+            'pydocstyle keypal',
+        ],
+    }
+
+
 def task_erase():
     """Delete all git untracked files (better to use then clean_targets)."""
     return {
@@ -47,12 +56,12 @@ def task_erase():
            }
 
 
-'''def task_pot():
+def task_pot():
     """Re-create .pot."""
     return {
-            'actions': ['p'],
-            'file_dep': glob.glob(''),
-            'targets': [''],
+            'actions': ['pybabel extract -o "./locales/tgbot.pot" -k _:2 keypal/tgbot'],
+            'file_dep': glob.glob('keypal/tgbot/*.py'),
+            'targets': ['./locales/tgbot.pot'],
             'clean': True
            }
 
@@ -61,10 +70,10 @@ def task_po():
     """Update translations."""
     return {
             'actions': [
-                ''
+                'pybabel update -D tgbot -d locales -i locales/tgbot.pot -l ru_RU.UTF-8'
             ],
-            'file_dep': [''],
-            'targets': [''],
+            'file_dep': ['./locales/tgbot.pot'],
+            'targets': ['./locales/ru_RU.UTF-8/LC_MESSAGES/tgbot.po'],
            }
 
 
@@ -72,27 +81,33 @@ def task_mo():
     """Compile translations."""
     return {
             'actions': [
-                (os.makedirs, [""], {"exist_ok": True}),
-                ''
+                (os.makedirs, ["keypal/ru_RU.UTF-8/LC_MESSAGES"], {"exist_ok": True}),
+                'pybabel compile -D tgbot -d keypal -l ru_RU.UTF-8 -i locales/ru_RU.UTF-8/LC_MESSAGES/tgbot.po'
             ],
-            'file_dep': [''],
-            'targets': [''],
+            'file_dep': ['./locales/ru_RU.UTF-8/LC_MESSAGES/tgbot.po'],
+            'targets': ['./keypal/ru_RU.UTF-8/LC_MESSAGES/tgbot.mo'],
             'clean': True
            }
 
 
 def task_i18n():
+    """Auto-creation locale."""
     return {
-            'actions': None,
-            'task_dep': ['pot', 'po', 'mo'],
-            'doc': 'task for generating translations',
-            }
+        'actions': None,
+        'task_dep': ['pot', 'po', 'mo']
+    }
 
+
+def task_testall():
+    return {
+            'task_dep': ['test_client', 'test_mock', 'test_codestyle',],
+            'actions': ['echo 0',]
+            }
 
 
 def task_sdist():
     return {
-            'actions': ['python3 -m build -s -n'],
+            'actions': ['python -m build -s -n'],
             'task_dep': ['erase'],
             'doc': 'generate source distribution',
             }
@@ -100,8 +115,7 @@ def task_sdist():
 
 def task_wheel():
     return {
-            'actions': ['python3 -m build -w'],
+            'actions': ['python -m build -w'],
             'task_dep': ['i18n', 'html'],
             'doc': 'generate wheel',
             }
-'''
