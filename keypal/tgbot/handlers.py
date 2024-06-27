@@ -429,25 +429,29 @@ async def choose_url(message: Message, state: FSMContext):
     Check if url with this substring exist and displey keyboard with appropriate urls.
     Request to choose url.
     """
-    global url_column, chosen_urls
+    global url_column, chosen_urls, bw_client
 
     url = message.text
-    cur_urls = urls
+    cur_urls= bw_client.search_items_with_uri_part(url)
     chosen_urls = []
     url_column = 0
 
     for el in cur_urls:
-        if str(url) in el:
-            chosen_urls.append(el)
+        for j in el["login"]["uris"]:
+            if str(url) in j["uri"]:
+                chosen_urls.append(j["uri"])
 
+    chosen_urls = list(set(chosen_urls))
     chosen_urls = sorted(chosen_urls)
+
+    # await message.answer(str(chosen_urls))
 
     if len(chosen_urls) == 0:
         await message.answer(_(locale, "There are no records for this website"))
         await state.clear()
         await main_menu(message)
     elif len(chosen_urls) == 1:
-        await message.answer(_(locale, "Selected website {}").format(chosen_urls[0]))
+        await message.answer(_(locale, "Selected website {}").format(chosen_urls[0]), disable_web_page_preview=True)
         await state.update_data(url=chosen_urls[0])
         await state.set_state(Password_flow.login)
         await choose_login(message, state)
@@ -458,12 +462,15 @@ async def choose_url(message: Message, state: FSMContext):
 
 async def choose_login(message: Message, state: FSMContext):
     """Displey account logins on selected site and request to choose login."""
-    global login_column, chosen_logins
+    global login_column, chosen_logins, bw_client
 
     chosen_logins, login_column = [], 0
     data = await state.get_data()
 
-    chosen_logins = ["ilya1337", "roman228", "igor322", "valera", "dimon", "barabashka"]
+    bw_data = bw_client.search_items_with_uri_part(data["url"])
+
+    for el in bw_data:
+        chosen_logins.append(el["login"]["username"])
 
     chosen_logins = sorted(chosen_logins)
     await message.answer(_(locale, "Please select login"),
@@ -472,7 +479,16 @@ async def choose_login(message: Message, state: FSMContext):
 
 async def check_work_type(message: Message, state: FSMContext):
     """Determine whether it's a 'GET' or 'UPDATE' process."""
-    password = "asdasdas123123asdasd"
+    global bw_client
+    password = ""
+
+    data = await state.get_data()
+    bw_data = bw_client.search_items_with_uri_part(data["url"])
+
+    for el in bw_data:
+        if el["login"]["username"] == data["login"]:
+            password = el["login"]["password"]
+
     await state.update_data(password=password)
     data = await state.get_data()
 
@@ -491,7 +507,7 @@ async def send_password(message: Message, state: FSMContext):
                                                                                         data["login"],
                                                                                         data["password"])
 
-    await message.answer(res, parse_mode=ParseMode.HTML)
+    await message.answer(res, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
     await state.clear()
     await main_menu(message)
 
