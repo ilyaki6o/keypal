@@ -1,0 +1,7 @@
+graft docs
+graft keypal
+graft specification
+graft locales
+include Pipfile
+include pyproject.toml
+include dodo.py
