@@ -6,3 +6,5 @@ build/
 *.db
 *.mo
 *.pot
+dist/
+*.egg-info
