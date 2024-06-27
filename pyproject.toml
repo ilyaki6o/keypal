@@ -1,0 +1,26 @@
+[project]
+name = "KeyPal"
+version = "1.0.0"
+dependencies = [
+    "aiogram",
+    "validators",
+    "pexpect"
+]
+authors = [
+    {name = "Goncharov Ilya", email = "ilgoncharov137@gmail.com"},
+    {name = "Roman Danilov", email = "romanosauce.code@gmail.com"},
+    {name = "Shpigun Igor", email = "Igor.ig0207@mail.ru"},
+
+]
+description = "KeyPal is a telegram bot providing access to remote server with running instance of BitWarden password manager."
+
+
+[build-system]
+requires = ['setuptools']
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.package-dir]
+KeyPal = "keypal"
+
+
