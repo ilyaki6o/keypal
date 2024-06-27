@@ -556,7 +556,15 @@ async def delete_password_query(message: Message, state: FSMContext):
 @router.message(Set_Password.password)
 async def set_new_password(message: Message, state: FSMContext):
     """Catch password for new account and save in in memmory."""
+    global bw_client
+
     await state.update_data(password=message.text)
+    data = await state.get_data()
+
+    bw_client.create_password(uri=data["url"],
+                              username=data["login"],
+                              password=data["password"])
+
     await send_password(message, state)
 
 
@@ -583,14 +591,27 @@ async def login_for_set(message: Message, state: FSMContext):
     If pare <url, login> already exist then request to update password for pare.
     Else request password for new account.
     """
+    global bw_client
     login = str(message.text)
     await state.update_data(login=login)
     data = await state.get_data()
     url = data["url"]
 
-    if url in meneger and login in meneger[url]:
-        await message.answer(_(locale, "For this website, an account with this login is already recorded.\n")
-                             + _(locale, "Would you like to update your password?"), reply_markup=kb.update_exist_password)
+    bw_data = bw_client.search_items_with_uri_part(url)
+
+    same_login = []
+
+    for el in bw_data:
+        if data["login"] == el["login"]["username"]:
+            for j in el["login"]["uris"]:
+                same_login.append(j["uri"])
+
+
+    if url in same_login:
+        await message.answer(_(locale, "For this website, an account with this login is already recorded.\n"))
+        await state.clear()
+        await main_menu(message)
+
     else:
         await message.answer(_(locale, "Enter the password for account on website {}\n").format(url)
                              + _(locale, "Login: {}").format(login))
