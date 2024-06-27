@@ -25,7 +25,7 @@ new_session = InlineKeyboardMarkup(inline_keyboard=[
 main_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text=hl._(hl.locale, "GET"), callback_data="get_password")],
     [InlineKeyboardButton(text=hl._(hl.locale, "SET"), callback_data="set_password"),
-     InlineKeyboardButton(text=hl._(hl.locale, "UPDATE"), callback_data="update_password")],
+     InlineKeyboardButton(text=hl._(hl.locale, "DELETE"), callback_data="delete_password")],
 ])
 
 
@@ -38,6 +38,12 @@ update_exist_password = InlineKeyboardMarkup(inline_keyboard=[
 translate = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="RU", callback_data="translate_ru"),
      InlineKeyboardButton(text="EN", callback_data="translate_en")]
+])
+
+
+delete_password = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text=hl._(hl.locale, "Yes"), callback_data="delete_password_yes"),
+     InlineKeyboardButton(text=hl._(hl.locale, "No"), callback_data="delete_password_no")]
 ])
 
 

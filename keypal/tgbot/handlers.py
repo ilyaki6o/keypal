@@ -218,12 +218,12 @@ async def get_password(call: CallbackQuery, state: FSMContext):
     await call.answer('')
 
 
-@router.callback_query(F.data == "update_password")
-async def update_password(call: CallbackQuery, state: FSMContext):
+@router.callback_query(F.data == "delete_password")
+async def delete_password(call: CallbackQuery, state: FSMContext):
     """
-    'UPDATE' button on main menu hendler.
+    'DETELE' button on main menu hendler.
 
-    Requests the address of the website where you need to update your password.
+    Requests the address of the website where you need to delete your password.
     """
     await call.message.answer(_(locale, "Enter the url to search for the password"))
     await state.set_state(Password_flow.url)
@@ -340,6 +340,36 @@ async def chenge_exist_password(call: CallbackQuery, state: FSMContext):
             await main_menu(call.message)
 
     await call.answer("")
+
+
+@router.callback_query(F.data.startswith("delete_password_"))
+async def delete_password_callback(call: CallbackQuery, state: FSMContext):
+    """
+    "Yes" and 'No' button hendler for keyboard while delete password.
+
+    With 'Yes' delete password and display main menu.
+    With 'No' stop  process and display main menu.
+    """
+    global bw_client
+    type_bt = str(call.data)[-3:]
+
+
+    match type_bt:
+        case "yes":
+            data = await state.get_data()
+            bw_data = bw_client.search_items_with_uri_part(data["url"])
+
+            for el in bw_data:
+                if data["login"] == el["login"]["username"]:
+                    bw_client.del_password_by_id(el["id"])
+                    break
+
+            await call.message.edit_text(_(locale, "Password removed"))
+        case "_no":
+            await call.message.edit_text(_(locale, "Password remove is canseled"))
+            
+    await state.clear()
+    await main_menu(call.message)
 
 
 ####### Func
@@ -494,10 +524,8 @@ async def check_work_type(message: Message, state: FSMContext):
 
     if data["work_type"] == "get_password":
         await send_password(message, state)
-    elif data["work_type"] == "update_password":
-        await message.answer(_(locale, "Please enter new password"))
-        await state.set_state(Password_flow.password)
-
+    elif data["work_type"] == "delete_password":
+        await delete_password_query(message, state)
 
 async def send_password(message: Message, state: FSMContext):
     """Displat login and password for selected website."""
@@ -508,15 +536,21 @@ async def send_password(message: Message, state: FSMContext):
                                                                                         data["password"])
 
     await message.answer(res, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+
     await state.clear()
     await main_menu(message)
 
 
-@router.message(Password_flow.password)
-async def change_password(message: Message, state: FSMContext):
-    """Catch updated password and save it in memmory."""
-    await state.update_data(password=message.text)
-    await send_password(message, state)
+async def delete_password_query(message: Message, state: FSMContext):
+    """Delete password from bitwaeden."""
+    data = await state.get_data()
+
+    res = _(locale, "For website: {}\n\nLogin: <code>{}</code>\nPassword: <code>{}</code>").format(data["url"],
+                                                                                        data["login"],
+                                                                                        data["password"])
+
+    await message.answer(res, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+    await message.answer("Are you sure you want to delete the password", reply_markup=kb.delete_password)
 
 
 @router.message(Set_Password.password)
